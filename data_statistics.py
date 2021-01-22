@@ -6,8 +6,6 @@ import seaborn as sn
 import os
 import argparse
 
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-core_directory', type=str, default='./Data/', help='Data directory')
