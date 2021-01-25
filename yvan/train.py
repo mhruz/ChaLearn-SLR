@@ -24,7 +24,7 @@ from torch.optim import Adam, AdamW, SGD
 from torch.utils.data import DataLoader, Dataset
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, CosineAnnealingLR, ReduceLROnPlateau
 from custom_losses import LabelSmoothingLoss, FocalLoss, FocalCosineLoss, SymmetricCrossEntropy, BiTemperedLogisticLoss
-from utils import TrainDataset,RCNN
+from utils import TrainDataset, RCNN
 
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
@@ -183,7 +183,7 @@ if __name__ == '__main__':
         # ====================================================
         # model & optimizer
         # ====================================================
-        model = RCNN(CFG['target_size'], CFG['model_name'], CFG['target_size'], True, CFG['hidden_size'], CFG['LSTM_layers'])
+        model = RCNN(CFG['target_size'], CFG['model_name'], True, CFG['hidden_size'], CFG['LSTM_layers'])
         CFG['mean'] = list(model.default_cfg['mean'])
         CFG['std'] = list(model.default_cfg['std'])
         model.to(device)
