@@ -6,7 +6,7 @@ import timm
 import torch.nn as nn
 
 
-class DatasetLoader(Dataset):
+class TrainDataset(Dataset):
     # Loader from train_list.csv
     def __init__(self, df, data_path, transform=None):
         self.df = df
