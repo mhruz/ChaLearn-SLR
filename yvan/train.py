@@ -161,7 +161,7 @@ if __name__ == '__main__':
     # ====================================================
     # Data loading
     # ====================================================
-    train = pd.read_csv(core_dir + '/Data/merged.csv')
+    train = pd.read_csv(core_dir + '/data/train_list.csv')
 
     # ====================================================
     # Data split
