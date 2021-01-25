@@ -1,6 +1,6 @@
 .idea/
-Data/*
-!Data/.gitkeep
+data/*
+!data/.gitkeep
 *.pyd
 *.pyc
 venv/
