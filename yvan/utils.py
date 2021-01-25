@@ -20,6 +20,7 @@ class TrainDataset(Dataset):
 
     def read_images(self, img_list, transform=None):
         X = []
+        img_list = img_list.split(',')
         for file_name in img_list:
             file_path = os.path.join(self.data_path, file_name)
             image = cv2.imread(file_path)
