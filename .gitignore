@@ -1,7 +1,8 @@
 .idea/
-Data/*
-!Data/.gitkeep
-*.csv
+data/*
+!data/.gitkeep
 *.pyd
 *.pyc
 venv/
+yvan/data/*
+!yvan/data/train_list.csv

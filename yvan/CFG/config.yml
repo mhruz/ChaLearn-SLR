@@ -1,0 +1,36 @@
+data_path : '/storage/plzen4-ntis/projects/korpusy_cv/AUTSL/train_jpg'
+output_dir : '/output/'
+model_name : 'tf_efficientnet_b3_ns'
+print_freq : 100
+seed : 42
+num_workers : 6
+size : 256
+epochs : 2
+batch_size : 1
+scheduler : 'CosineAnnealingWarmRestarts'  # ['ReduceLROnPlateau', 'CosineAnnealingLR', 'CosineAnnealingWarmRestarts']
+factor : 0.9    # ReduceLROnPlateau
+patience : 2    # ReduceLROnPlateau
+eps : 1.e-6        # ReduceLROnPlateau
+T_max : 10      # CosineAnnealingLR
+T_0 : 10        # CosineAnnealingWarmRestarts
+optimizer: 'Adam'    # ['Adam', 'AdamW', 'SGD']
+lr : 3.e-4
+min_lr : 1.e-6
+weight_decay : 1.e-6  # Adam
+momentum : 0.9  # SGD
+gradient_accumulation_steps : 1
+max_grad_norm : 1000
+target_size : 226
+target_col : 'label'
+n_fold : 2
+test_size: 0.2  # n_fold == 1
+saveEachEpoch : False
+mean : [0.485, 0.456, 0.406]
+std : [0.229, 0.224, 0.225]
+trn_fold : [0, 1, 2, 3, 4]
+criterion: 'LabelSmoothing'   # ['CrossEntropyLoss', 'LabelSmoothing', 'FocalLoss', 'FocalCosineLoss', 'SymmetricCrossEntropyLoss', 'BiTemperedLoss']
+smoothing : 0.1    # LabelSmoothing, BiTemperedLoss
+t1: 0.8   # BiTemperedLoss
+t2: 1.4   # BiTemperedLoss
+hidden_size: 128
+LSTM_layers: 1

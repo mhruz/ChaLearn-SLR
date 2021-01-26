@@ -6,12 +6,10 @@ import seaborn as sn
 import os
 import argparse
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-core_directory', type=str, default='./Data/', help='Data directory')
-parser.add_argument('-csv_file', type=str, default='train_labels.csv', help='train csv file')
-
-
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-core_directory', type=str, default='./data/', help='data directory')
+    parser.add_argument('-csv_file', type=str, default='train_labels.csv', help='train csv file')
     args = parser.parse_args()
     BASE_DIR = args.core_directory
 
