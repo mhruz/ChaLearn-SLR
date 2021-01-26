@@ -2,7 +2,6 @@
 # imports
 # ====================================================
 import sys
-# sys.path.append('../input/pytorch-image-models/pytorch-image-models-master')
 
 import os
 import time
@@ -14,22 +13,18 @@ from shutil import copyfile
 import numpy as np
 import pandas as pd
 
-from sklearn.model_selection import StratifiedKFold
-
-import cv2
+from sklearn.model_selection import StratifiedKFold, train_test_split
 
 import torch
 import torch.nn as nn
 from torch.optim import Adam, AdamW, SGD
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, CosineAnnealingLR, ReduceLROnPlateau
 from custom_losses import LabelSmoothingLoss, FocalLoss, FocalCosineLoss, SymmetricCrossEntropy, BiTemperedLogisticLoss
 from utils import TrainDataset, RCNN
 
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
-
-import timm
 
 import yaml
 import warnings
@@ -137,7 +132,7 @@ if __name__ == '__main__':
     # ====================================================
     # '/storage/plzen1/home/grubiv/ChaLearn'
     parser = argparse.ArgumentParser()
-    parser.add_argument('-core_directory', type=str, default='storage/plzen1/home/grubiv/ChaLearn', help='Core directory')
+    parser.add_argument('-core_directory', type=str, default='/storage/plzen1/home/grubiv/ChaLearn', help='Core directory')
     parser.add_argument('-config_file', type=str, default='config.yml', help='Config file')
     args = parser.parse_args()
     core_dir = args.core_directory
@@ -166,12 +161,19 @@ if __name__ == '__main__':
     # ====================================================
     # Data split
     # ====================================================
-    # TODO: training for fold = 1 -> dev_set addition
     folds = train.copy()
-    Fold = StratifiedKFold(n_splits=CFG['n_fold'], shuffle=True, random_state=CFG['seed'])
-    for n, (train_index, val_index) in enumerate(Fold.split(folds, folds[CFG['target_col']])):
-        folds.loc[val_index, 'fold'] = int(n)
-    folds['fold'] = folds['fold'].astype(int)
+    if CFG['n_fold'] == 1:
+        train, val = train_test_split(folds, test_size=CFG['test_size'], stratify=folds[CFG['target_col']], random_state=CFG['seed'])
+        train = train.copy()
+        val = val.copy()
+        train['fold'] = 0
+        val['fold'] = 1
+        folds = pd.concat([train, val])
+    else:
+        Fold = StratifiedKFold(n_splits=CFG['n_fold'], shuffle=True, random_state=CFG['seed'])
+        for n, (train_index, val_index) in enumerate(Fold.split(folds, folds[CFG['target_col']])):
+            folds.loc[val_index, 'fold'] = int(n)
+        folds['fold'] = folds['fold'].astype(int)
     # print(folds.groupby(['fold', CFG['target_col']]).size())
 
     # ====================================================
@@ -184,8 +186,6 @@ if __name__ == '__main__':
         # model & optimizer
         # ====================================================
         model = RCNN(CFG['target_size'], CFG['model_name'], True, CFG['hidden_size'], CFG['LSTM_layers'])
-        CFG['mean'] = list(model.default_cfg['mean'])
-        CFG['std'] = list(model.default_cfg['std'])
         model.to(device)
         optimizer = get_optimizer()
         scheduler = get_scheduler(optimizer)

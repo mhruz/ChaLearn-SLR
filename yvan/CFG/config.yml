@@ -23,6 +23,7 @@ max_grad_norm : 1000
 target_size : 226
 target_col : 'label'
 n_fold : 2
+test_size: 0.2  # n_fold == 1
 saveEachEpoch : False
 mean : [0.485, 0.456, 0.406]
 std : [0.229, 0.224, 0.225]
