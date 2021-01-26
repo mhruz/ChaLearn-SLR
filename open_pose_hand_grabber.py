@@ -1,5 +1,4 @@
 import argparse
-import h5py
 import os
 import cv2
 import numpy as np
@@ -109,6 +108,9 @@ if __name__ == "__main__":
     parser.add_argument('video_path', type=str, help='path to videos with signs')
     parser.add_argument('open_pose_h5', type=str, help='path to H5 with detected joint locations')
     parser.add_argument('--threshold', type=float, help='optional confidence threshold, default=0.5', default=0.5)
+    parser.add_argument('--visualize', type=bool, help='optional visualization, default=False', default=False)
+    parser.add_argument('--out_h5', type=str, help='optional output h5 dataset')
+    parser.add_argument('--out_size', type=int, help='size of images in h5 file, default=224', default=224)
     args = parser.parse_args()
 
     joints_h5 = h5py.File(args.open_pose_h5, "r")
@@ -116,17 +118,24 @@ if __name__ == "__main__":
     video_filenames = os.listdir(args.video_path)
     video_filenames = [x for x in video_filenames if x.endswith("_color.mp4")]
 
+    if args.out_h5 is not None:
+        f = h5py.File(args.out_h5, "w")
+
     pause = 40
 
-    cv2.namedWindow("image", 0)
-    cv2.namedWindow("left hand", 0)
-    cv2.namedWindow("right hand", 0)
+    if args.vizualize:
+        cv2.namedWindow("image", 0)
+        cv2.namedWindow("left hand", 0)
+        cv2.namedWindow("right hand", 0)
 
     random.shuffle(video_filenames)
 
     for video_fn in video_filenames:
         video = cv2.VideoCapture(os.path.join(args.video_path, video_fn))
         frame = 0
+
+        if args.out_h5 is not None:
+            number_of_frames = video.get(cv2.CAP_PROP_FRAME_COUNT)
 
         while True:
 
@@ -142,19 +151,23 @@ if __name__ == "__main__":
             # get the left hand image
             left_hand_image, mlh, slh = get_left_hand(im, joints, square=True)
 
-            cv2.imshow("left hand", left_hand_image)
-            cv2.imshow("right hand", right_hand_image)
+            if args.visualize:
+                cv2.imshow("left hand", left_hand_image)
+                cv2.imshow("right hand", right_hand_image)
 
-            print("Left hand image size: {}".format(left_hand_image.shape))
-            print("Right hand image size: {}".format(right_hand_image.shape))
-            print("Left Hand conf: mean {}, sum {}\nRight Hadn conf: mean {}, sum {}".format(mlh, slh, mrh, srh))
+                print("Left hand image size: {}".format(left_hand_image.shape))
+                print("Right hand image size: {}".format(right_hand_image.shape))
+                print("Left Hand conf: mean {}, sum {}\nRight Hand conf: mean {}, sum {}".format(mlh, slh, mrh, srh))
 
-            cv2.imshow("image", im)
-            key = cv2.waitKey(pause)
-            if key == 32:
-                pause = abs(pause - 40)
+                cv2.imshow("image", im)
+                key = cv2.waitKey(pause)
+                if key == 32:
+                    pause = abs(pause - 40)
 
             frame += 1
 
+    if args.out_h5 is not None:
+        f.close()
 
-    cv2.destroyWindow()
+    if args.visualize:
+        cv2.destroyAllWindows()
