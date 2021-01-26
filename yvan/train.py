@@ -166,8 +166,8 @@ if __name__ == '__main__':
         train, val = train_test_split(folds, test_size=CFG['test_size'], stratify=folds[CFG['target_col']], random_state=CFG['seed'])
         train = train.copy()
         val = val.copy()
-        train['fold'] = 0
-        val['fold'] = 1
+        train['fold'] = 1
+        val['fold'] = 0
         folds = pd.concat([train, val])
     else:
         Fold = StratifiedKFold(n_splits=CFG['n_fold'], shuffle=True, random_state=CFG['seed'])
