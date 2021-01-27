@@ -107,10 +107,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Extract confident hand images from videos that have OpenPose joints.')
     parser.add_argument('video_path', type=str, help='path to videos with signs')
     parser.add_argument('open_pose_h5', type=str, help='path to H5 with detected joint locations')
-    parser.add_argument('--threshold', type=float, help='optional confidence threshold, default=0.5', default=0.5)
+    parser.add_argument('--threshold', type=float, help='optional confidence threshold, default=0.4', default=0.4)
     parser.add_argument('--visualize', type=bool, help='optional visualization, default=False', default=False)
     parser.add_argument('--out_h5', type=str, help='optional output h5 dataset')
-    parser.add_argument('--out_size', type=int, help='size of images in h5 file, default=224', default=224)
+    parser.add_argument('--out_size', type=int, help='size of images in h5 file, default=70', default=70)
     args = parser.parse_args()
 
     joints_h5 = h5py.File(args.open_pose_h5, "r")
@@ -123,21 +123,35 @@ if __name__ == "__main__":
 
     pause = 40
 
-    if args.vizualize:
+    if args.visualize:
         cv2.namedWindow("image", 0)
         cv2.namedWindow("left hand", 0)
         cv2.namedWindow("right hand", 0)
 
-    random.shuffle(video_filenames)
+    #random.shuffle(video_filenames)
 
     for video_fn in video_filenames:
         video = cv2.VideoCapture(os.path.join(args.video_path, video_fn))
+        number_of_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+        number_of_joint_frames = len(joints_h5[video_fn[:-4]])
+        print("Processing video: {}".format(video_fn))
         frame = 0
 
-        if args.out_h5 is not None:
-            number_of_frames = video.get(cv2.CAP_PROP_FRAME_COUNT)
+        if number_of_frames != number_of_joint_frames:
+            print("Warning! Inconsistent number of frames"
+                  " of video and OpenPose joints ({}/{})".format(number_of_frames, number_of_joint_frames))
 
-        while True:
+        if args.out_h5 is not None:
+            left_hands = np.zeros((number_of_frames, args.out_size, args.out_size, 3), dtype=np.uint8)
+            right_hands = np.zeros((number_of_frames, args.out_size, args.out_size, 3), dtype=np.uint8)
+
+            left_hands_frames = []
+            right_hands_frames = []
+
+            left_hand_frame = 0
+            right_hand_frame = 0
+
+        while True and frame < number_of_joint_frames:
 
             ret, im = video.read()
             if not ret:
@@ -150,6 +164,19 @@ if __name__ == "__main__":
             right_hand_image, mrh, srh = get_right_hand(im, joints, square=True)
             # get the left hand image
             left_hand_image, mlh, slh = get_left_hand(im, joints, square=True)
+
+            if args.out_h5 is not None:
+                if mrh >= args.threshold:
+                    right_hand_image = cv2.resize(right_hand_image, (args.out_size, args.out_size))
+                    right_hands[right_hand_frame] = right_hand_image
+                    right_hand_frame += 1
+                    right_hands_frames.append(frame)
+
+                if mlh >= args.threshold:
+                    left_hand_image = cv2.resize(left_hand_image, (args.out_size, args.out_size))
+                    left_hands[left_hand_frame] = left_hand_image
+                    left_hand_frame += 1
+                    left_hands_frames.append(frame)
 
             if args.visualize:
                 cv2.imshow("left hand", left_hand_image)
@@ -165,6 +192,22 @@ if __name__ == "__main__":
                     pause = abs(pause - 40)
 
             frame += 1
+
+        if args.out_h5 is not None:
+            f.create_group(video_fn)
+            f[video_fn].create_group("left_hand")
+            f[video_fn].create_group("right_hand")
+            f[video_fn]["left_hand"].create_dataset("images", shape=(left_hand_frame, args.out_size, args.out_size, 3),
+                                                    dtype=np.uint8, data=left_hands[:left_hand_frame])
+            f[video_fn]["left_hand"].create_dataset("frames", shape=(left_hand_frame,), dtype=np.int,
+                                                    data=left_hands_frames)
+            f[video_fn]["right_hand"].create_dataset("images",
+                                                     shape=(right_hand_frame, args.out_size, args.out_size, 3),
+                                                     dtype=np.uint8, data=right_hands[:right_hand_frame])
+            f[video_fn]["right_hand"].create_dataset("frames", shape=(right_hand_frame,), dtype=np.int,
+                                                     data=right_hands_frames)
+
+            f.flush()
 
     if args.out_h5 is not None:
         f.close()
