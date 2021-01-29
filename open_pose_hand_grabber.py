@@ -109,6 +109,8 @@ if __name__ == "__main__":
     parser.add_argument('open_pose_h5', type=str, help='path to H5 with detected joint locations')
     parser.add_argument('--threshold', type=float, help='optional confidence threshold, default=0.4', default=0.4)
     parser.add_argument('--visualize', type=bool, help='optional visualization, default=False', default=False)
+    parser.add_argument('--draw_joints', type=bool, help='optional visualization of joints, default=False',
+                        default=False)
     parser.add_argument('--out_h5', type=str, help='optional output h5 dataset')
     parser.add_argument('--out_size', type=int, help='size of images in h5 file, default=70', default=70)
     args = parser.parse_args()
@@ -128,7 +130,7 @@ if __name__ == "__main__":
         cv2.namedWindow("left hand", 0)
         cv2.namedWindow("right hand", 0)
 
-    #random.shuffle(video_filenames)
+    # random.shuffle(video_filenames)
 
     for video_fn in video_filenames:
         video = cv2.VideoCapture(os.path.join(args.video_path, video_fn))
@@ -158,7 +160,7 @@ if __name__ == "__main__":
                 break
 
             joints = joints_h5[video_fn[:-4]][frame]
-            draw_joints(im, joints)
+            # draw_joints(im, joints)
 
             # get the right hand image
             right_hand_image, mrh, srh = get_right_hand(im, joints, square=True)
