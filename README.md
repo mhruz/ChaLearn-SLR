@@ -33,4 +33,38 @@ Index | Body part | Index | Body part | Index | Body part
  | | | 26 | left pinky finger PIP | 47 | right pinky finger PIP
  | | | 27 | left pinky finger DIP | 48 | right pinky finger DIP
  | | | 28 | left pinky fingertip | 49 | right pinky fingertip
+ 
+## Sing semantics
+Based on our prior work (https://link.springer.com/chapter/10.1007/978-3-642-23538-2_42) we can define several 
+"independent" semantic features and compute their presence in a video of a sign.
+
+### Location
+Represents the location, relative to some fixed body-part, where the main part of the sign occurs. Each SL defines its
+own locations (by the means of linguists). Unfortunately, the location of articulation does not need to be a discriminative
+feature of the signs. But we shall pretend it is.
+
+The presence of a location feature in a video is based on an analysis of a histogram of hand locations. The location can
+be defined per hand.
+
+Universally we can define the following locations:
+
+- **Neutral space** - when there is no predominant location - this is relevant only on the level of a sign not a video 
+(eg. each repetition of the same sign happens in different location). Could be a fallback location?
+- **Above head**
+- **Upper part of the face** - think of top of the head or forehead, even eyebrows.
+- **Eyes**
+- **Nose**
+- **Mouth**
+- **Lower part of the face** - as in chin
+- **Cheeks**
+- **Ears**
+- **Neck**
+- **Shoulders**
+- **Chest**
+- **Waist**
+- **Arm**
+- **Wrist** - we should make this simply "the other hand"
+
+### Movement
+  
 
