@@ -34,7 +34,7 @@ Index | Body part | Index | Body part | Index | Body part
  | | | 27 | left pinky finger DIP | 48 | right pinky finger DIP
  | | | 28 | left pinky fingertip | 49 | right pinky fingertip
  
-## Sing semantics
+## Sign semantics
 Based on our prior work (https://link.springer.com/chapter/10.1007/978-3-642-23538-2_42) we can define several 
 "independent" semantic features and compute their presence in a video of a sign.
 
