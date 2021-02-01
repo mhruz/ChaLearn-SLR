@@ -66,5 +66,28 @@ Universally we can define the following locations:
 - **Wrist** - we should make this simply "the other hand"
 
 ### Movement
-  
+Movement is linguistically very complex and combines the movement of all the body parts. In this work, we should focus
+only on hand/arm movement. Maybe we can further disentangle hands and arms? Only short-term movements are considered
+(eg. "up", "down" movement is ok; "up then down" is not ok)
+
+- **Up-wards**
+- **Down-wards**
+- **To the right**
+- **To the left**
+- **Moving away from** - we can define each hand movement in terms of from which (stationary) body part it moves away
+- **Moving to**
+- **Hold** - basically when the hand stops moving
+- **Passage** - e.g. when a hand moves in front of other body parts - should we use this? how?
+- **Contact** - important, but how to detect contact? It is hard to distinguish contact and overlap in 2D
+- **Twisting** - when wrist is stationary, but the hand moves?
+
+### Orientation
+How is the hand oriented.
+
+- **Up-wards**
+- **Down-wards**
+- **To the body**
+- **Away from the body**
+- **To the right** - what is right?
+- **To the left** - what is left? 
 
