@@ -80,6 +80,7 @@ only on hand/arm movement. Maybe we can further disentangle hands and arms? Only
 - **Passage** - e.g. when a hand moves in front of other body parts - should we use this? how?
 - **Contact** - important, but how to detect contact? It is hard to distinguish contact and overlap in 2D
 - **Twisting** - when wrist is stationary, but the hand moves?
+- **Symmetric** - boolean whether the movement is symmetric
 
 ### Orientation
 How is the hand oriented.
