@@ -21,7 +21,7 @@ from torch.optim import Adam, AdamW, SGD
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, CosineAnnealingLR, ReduceLROnPlateau
 from custom_losses import LabelSmoothingLoss, FocalLoss, FocalCosineLoss, SymmetricCrossEntropy, BiTemperedLogisticLoss
-from utils import TrainDataset, RCNN
+from utils import DatasetFromImages, RecurrentCNN
 
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
@@ -47,14 +47,15 @@ def seed_torch(seed):
 # ====================================================
 # Transforms
 # ====================================================
-def get_transforms(*, data):
+def get_transforms(data):
     if data == 'train':
         return A.Compose([
-            A.RandomResizedCrop(CFG['size'], CFG['size'], scale=(0.8, 1.0)),
-            A.Transpose(p=0.5),
-            A.HorizontalFlip(p=0.5),
-            A.VerticalFlip(p=0.5),
-            A.ShiftScaleRotate(p=0.5),
+            A.Resize(CFG['size'], CFG['size']),
+            # A.RandomResizedCrop(CFG['size'], CFG['size'], scale=(0.8, 1.0)),
+            # A.Transpose(p=0.5),
+            # A.HorizontalFlip(p=0.5),
+            # A.VerticalFlip(p=0.5),
+            # A.ShiftScaleRotate(p=0.5),
             A.Normalize(
                 mean=CFG['mean'],
                 std=CFG['std'],
@@ -185,7 +186,7 @@ if __name__ == '__main__':
         # ====================================================
         # model & optimizer
         # ====================================================
-        model = RCNN(CFG['target_size'], CFG['model_name'], True, CFG['hidden_size'], CFG['LSTM_layers'])
+        model = RecurrentCNN(CFG['target_size'], CFG['model_name'], True, CFG['hidden_size'], CFG['LSTM_layers'])
         model.to(device)
         optimizer = get_optimizer()
         scheduler = get_scheduler(optimizer)
@@ -197,8 +198,8 @@ if __name__ == '__main__':
         val_idx = folds[folds['fold'] == fold].index
         train_folds = folds.loc[trn_idx].reset_index(drop=True)
         valid_folds = folds.loc[val_idx].reset_index(drop=True)
-        train_dataset = TrainDataset(train_folds, CFG['data_path'], transform=get_transforms(data='train'))
-        dev_datasset = TrainDataset(valid_folds,  CFG['data_path'], transform=get_transforms(data='valid'))
+        train_dataset = DatasetFromImages(train_folds, CFG['data_path'], transform=get_transforms(data='train'))
+        dev_datasset = DatasetFromImages(valid_folds,  CFG['data_path'], transform=get_transforms(data='valid'))
 
         trainloader = DataLoader(train_dataset, batch_size=CFG['batch_size'], shuffle=True,
                                  num_workers=CFG['num_workers'],

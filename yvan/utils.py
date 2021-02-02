@@ -6,7 +6,7 @@ import timm
 import torch.nn as nn
 
 
-class TrainDataset(Dataset):
+class DatasetFromImages(Dataset):
     # Loader from train_list.csv
     def __init__(self, df, data_path, transform=None):
         self.df = df
@@ -41,7 +41,7 @@ class TrainDataset(Dataset):
         return X, y
 
 
-class RCNN(nn.Module):
+class RecurrentCNN(nn.Module):
     def __init__(self, num_classes, architecture_name, pretrained, hidden_size, num_layers):
         super().__init__()
         self.feature_extractor = timm.create_model(architecture_name, pretrained=pretrained, num_classes=0)
