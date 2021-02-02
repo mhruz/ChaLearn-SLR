@@ -15,7 +15,7 @@ def draw_joints(im, joints):
 
 def get_right_hand(im, joints, border=0.2, square=False):
     joints = np.reshape(joints, (-1, 3))
-    right_hand_joints = joints[29:49]
+    right_hand_joints = joints[29:50]
 
     hand_image, m, s = get_sub_image(im, right_hand_joints, border, square)
 
@@ -24,7 +24,7 @@ def get_right_hand(im, joints, border=0.2, square=False):
 
 def get_left_hand(im, joints, border=0.2, square=False):
     joints = np.reshape(joints, (-1, 3))
-    left_hand_joints = joints[8:28]
+    left_hand_joints = joints[8:29]
 
     hand_image, m, s = get_sub_image(im, left_hand_joints, border, square)
 

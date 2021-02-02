@@ -33,14 +33,14 @@ if __name__ == "__main__":
     ref_idx = 26
     joints = f_joints[video_fn_ref[:-4]][ref_idx]
     joints = np.reshape(joints, (-1, 3))
-    hp1 = joints[8:28, :2]
+    hp1 = joints[8:29, :2]
 
     f_hands = h5py.File(r"z:\korpusy_cv\AUTSL\train_hand_images.h5")
     print(f_hands[video_fn_ref]["left_hand"]["frames"][:])
 
     for i, j in enumerate(f_joints[video_fn_target[:-4]]):
         joints = j
-        joints = np.reshape(joints, (-1, 3))[8:28]
+        joints = np.reshape(joints, (-1, 3))[8:29]
         hp2 = joints[:, :2]
 
         dist = compute_hand_pose_distance(hp1, hp2, metric_one=shoulder_length)
