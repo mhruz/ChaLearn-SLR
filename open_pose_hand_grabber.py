@@ -156,7 +156,7 @@ if __name__ == "__main__":
     for video_fn in video_filenames:
 
         kill += 1
-        if kill == 50:
+        if kill == 5:
             break
 
         video = cv2.VideoCapture(os.path.join(args.video_path, video_fn))
@@ -185,7 +185,7 @@ if __name__ == "__main__":
 
             speaker, sample = video_fn.split("_")[:2]
 
-        while True and frame < number_of_joint_frames:
+        while frame < number_of_joint_frames:
 
             ret, im = video.read()
             if not ret:
@@ -272,7 +272,9 @@ if __name__ == "__main__":
 
     if args.out_stat_dir:
         for speaker in stats:
+            plt.axes()
             for sample in stats[speaker]:
-                plt.plot(stats[speaker][sample]["left_hand_means"], stats[speaker][sample]["right_hand_means"])
+                plt.scatter(stats[speaker][sample]["left_hand_means"], stats[speaker][sample]["left_hand_stds"],
+                            c="blue")
 
         plt.show()

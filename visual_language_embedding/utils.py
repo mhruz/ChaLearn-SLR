@@ -19,8 +19,8 @@ def compute_hand_pose_distance(hp1, hp2, metric_one=1):
 if __name__ == "__main__":
 
     f_joints = h5py.File(r'z:\korpusy_cv\AUTSL\train_json_keypoints-raw.h5', 'r')
-    video_fn_ref = "signer7_sample1874_color.mp4"
-    video_fn_target = "signer2_sample392_color.mp4"
+    video_fn_ref = "signer7_sample15_color.mp4"
+    video_fn_target = "signer28_sample312_color.mp4"
 
     joints = f_joints[video_fn_ref[:-4]][0]
     joints = np.reshape(joints, (-1, 3))
@@ -52,7 +52,7 @@ if __name__ == "__main__":
     im1_idx = np.where(f_hands[video_fn_ref]["left_hand"]["frames"][:] == ref_idx)
     im1 = f_hands[video_fn_ref]["left_hand"]["images"][im1_idx][0]
 
-    im2_idx = np.where(f_hands[video_fn_target]["left_hand"]["frames"][:] == 53)
+    im2_idx = np.where(f_hands[video_fn_target]["left_hand"]["frames"][:] == 31)
     im2 = f_hands[video_fn_target]["left_hand"]["images"][im2_idx][0]
 
     cv2.namedWindow("im1", 0)
