@@ -1,11 +1,12 @@
-data_path : '/storage/plzen4-ntis/projects/korpusy_cv/AUTSL/train_jpg'
+data_path : '/storage/plzen4-ntis/projects/korpusy_cv/AUTSL/train_crop'
 output_dir : '/output/'
 model_name : 'tf_efficientnet_b3_ns'
-print_freq : 100
+train_csv: '/data/train_list_keyframes.csv'
+print_freq : 1000
 seed : 42
 num_workers : 6
 size : 256
-epochs : 2
+epochs : 15
 batch_size : 1
 scheduler : 'CosineAnnealingWarmRestarts'  # ['ReduceLROnPlateau', 'CosineAnnealingLR', 'CosineAnnealingWarmRestarts']
 factor : 0.9    # ReduceLROnPlateau
