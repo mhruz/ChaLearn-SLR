@@ -4,6 +4,8 @@ import cv2
 import numpy as np
 import random
 import h5py
+import csv
+import matplotlib.pyplot as plt
 
 
 def draw_joints(im, joints):
@@ -15,20 +17,20 @@ def draw_joints(im, joints):
 
 def get_right_hand(im, joints, border=0.2, square=False):
     joints = np.reshape(joints, (-1, 3))
-    right_hand_joints = joints[29:49]
+    right_hand_joints = joints[29:50]
 
-    hand_image, m, s = get_sub_image(im, right_hand_joints, border, square)
+    hand_image, m = get_sub_image(im, right_hand_joints, border, square)
 
-    return hand_image, m, s
+    return hand_image, m
 
 
 def get_left_hand(im, joints, border=0.2, square=False):
     joints = np.reshape(joints, (-1, 3))
-    left_hand_joints = joints[8:28]
+    left_hand_joints = joints[8:29]
 
-    hand_image, m, s = get_sub_image(im, left_hand_joints, border, square)
+    hand_image, m = get_sub_image(im, left_hand_joints, border, square)
 
-    return hand_image, m, s
+    return hand_image, m
 
 
 def get_sub_image(im, joints, border=0.2, square=False):
@@ -97,9 +99,8 @@ def get_sub_image(im, joints, border=0.2, square=False):
 
     conf = joints[:, 2]
     mean = np.mean(conf)
-    suma = np.sum(conf)
 
-    return sub_image, mean, suma
+    return sub_image, mean
 
 
 if __name__ == "__main__":
@@ -112,10 +113,22 @@ if __name__ == "__main__":
     parser.add_argument('--draw_joints', type=bool, help='optional visualization of joints, default=False',
                         default=False)
     parser.add_argument('--out_h5', type=str, help='optional output h5 dataset')
+    parser.add_argument('--out_stat_dir', type=str, help='optional output stats directory (data & images)')
+    parser.add_argument('--video_to_class_csv', type=str, help='optional csv with video labels')
     parser.add_argument('--out_size', type=int, help='size of images in h5 file, default=70', default=70)
     args = parser.parse_args()
 
-    joints_h5 = h5py.File(args.open_pose_h5, "r")
+    # variable initialization
+    pause = 40
+    right_hands = None
+    left_hands = None
+    left_hand_frame = 0
+    right_hand_frame = 0
+    left_hands_frames = None
+    right_hands_frames = None
+    f = None
+
+    stats = {}
 
     video_filenames = os.listdir(args.video_path)
     video_filenames = [x for x in video_filenames if x.endswith("_color.mp4")]
@@ -123,7 +136,14 @@ if __name__ == "__main__":
     if args.out_h5 is not None:
         f = h5py.File(args.out_h5, "w")
 
-    pause = 40
+    if args.out_stat_dir is not None:
+        if args.video_to_class_csv is None:
+            print("When using stat dir you need to specify the --video_to_class_csv arg.")
+
+        f_video_to_class = csv.reader(open(args.video_to_class_csv, "r"))
+        os.makedirs(args.out_stat_dir, exist_ok=True)
+
+    joints_h5 = h5py.File(args.open_pose_h5, "r")
 
     if args.visualize:
         cv2.namedWindow("image", 0)
@@ -132,7 +152,13 @@ if __name__ == "__main__":
 
     # random.shuffle(video_filenames)
 
+    kill = 0
     for video_fn in video_filenames:
+
+        kill += 1
+        if kill == 5:
+            break
+
         video = cv2.VideoCapture(os.path.join(args.video_path, video_fn))
         number_of_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
         number_of_joint_frames = len(joints_h5[video_fn[:-4]])
@@ -144,8 +170,8 @@ if __name__ == "__main__":
                   " of video and OpenPose joints ({}/{})".format(number_of_frames, number_of_joint_frames))
 
         if args.out_h5 is not None:
-            left_hands = np.zeros((number_of_frames, args.out_size, args.out_size, 3), dtype=np.uint8)
-            right_hands = np.zeros((number_of_frames, args.out_size, args.out_size, 3), dtype=np.uint8)
+            left_hands = np.zeros((number_of_joint_frames, args.out_size, args.out_size, 3), dtype=np.uint8)
+            right_hands = np.zeros((number_of_joint_frames, args.out_size, args.out_size, 3), dtype=np.uint8)
 
             left_hands_frames = []
             right_hands_frames = []
@@ -153,7 +179,13 @@ if __name__ == "__main__":
             left_hand_frame = 0
             right_hand_frame = 0
 
-        while True and frame < number_of_joint_frames:
+        if args.out_stat_dir is not None:
+            left_hand_means = np.zeros(number_of_joint_frames)
+            right_hand_means = np.zeros(number_of_joint_frames)
+
+            speaker, sample = video_fn.split("_")[:2]
+
+        while frame < number_of_joint_frames:
 
             ret, im = video.read()
             if not ret:
@@ -162,10 +194,19 @@ if __name__ == "__main__":
             joints = joints_h5[video_fn[:-4]][frame]
             # draw_joints(im, joints)
 
-            # get the right hand image
-            right_hand_image, mrh, srh = get_right_hand(im, joints, square=True)
-            # get the left hand image
-            left_hand_image, mlh, slh = get_left_hand(im, joints, square=True)
+            if args.out_h5 is not None:
+                # get the right hand image
+                right_hand_image, mrh = get_right_hand(im, joints, square=True)
+                # get the left hand image
+                left_hand_image, mlh = get_left_hand(im, joints, square=True)
+            else:
+                joints = np.reshape(joints, (-1, 3))
+                mrh = np.mean(joints[29:50, 2])
+                mlh = np.mean(joints[8:29, 2])
+
+            if args.out_stat_dir is not None:
+                left_hand_means[frame] = mlh
+                right_hand_means[frame] = mrh
 
             if args.out_h5 is not None:
                 if mrh >= args.threshold:
@@ -186,7 +227,7 @@ if __name__ == "__main__":
 
                 print("Left hand image size: {}".format(left_hand_image.shape))
                 print("Right hand image size: {}".format(right_hand_image.shape))
-                print("Left Hand conf: mean {}, sum {}\nRight Hand conf: mean {}, sum {}".format(mlh, slh, mrh, srh))
+                print("Left Hand conf: mean {}, sum {}\nRight Hand conf: mean {}, sum {}".format(mlh, mrh))
 
                 cv2.imshow("image", im)
                 key = cv2.waitKey(pause)
@@ -194,6 +235,18 @@ if __name__ == "__main__":
                     pause = abs(pause - 40)
 
             frame += 1
+
+        if args.out_stat_dir is not None:
+            if speaker not in stats:
+                stats[speaker] = {}
+
+            if sample not in stats[speaker]:
+                stats[speaker][sample] = {}
+
+            stats[speaker][sample]["left_hand_means"] = np.mean(left_hand_means)
+            stats[speaker][sample]["left_hand_stds"] = np.std(left_hand_means)
+            stats[speaker][sample]["right_hand_means"] = np.mean(right_hand_means)
+            stats[speaker][sample]["right_hand_stds"] = np.std(right_hand_means)
 
         if args.out_h5 is not None:
             f.create_group(video_fn)
@@ -216,3 +269,12 @@ if __name__ == "__main__":
 
     if args.visualize:
         cv2.destroyAllWindows()
+
+    if args.out_stat_dir:
+        for speaker in stats:
+            plt.axes()
+            for sample in stats[speaker]:
+                plt.scatter(stats[speaker][sample]["left_hand_means"], stats[speaker][sample]["left_hand_stds"],
+                            c="blue")
+
+        plt.show()
