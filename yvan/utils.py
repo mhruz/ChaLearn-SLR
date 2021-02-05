@@ -4,6 +4,7 @@ import cv2
 import os
 import timm
 import torch.nn as nn
+import sys
 
 
 class DatasetFromImages(Dataset):
@@ -76,7 +77,12 @@ class KeyFrameDataset(Dataset):
         path_to_keyframes = video_name.replace('_', '/')
         keyframes = keyframes[1:-1].split(',')
         for file_name in keyframes:
-            file_path = os.path.join(self.data_path, path_to_keyframes, file_name+'.jpg')
+            if int(file_name)<10:
+                file_path = os.path.join(self.data_path, path_to_keyframes, 'frame_00'+str(int(file_name))+'.jpg')
+            elif int(file_name)<100:
+                file_path = os.path.join(self.data_path, path_to_keyframes, 'frame_0'+str(int(file_name))+'.jpg')
+            else:
+                file_path = os.path.join(self.data_path, path_to_keyframes, 'frame_' +str(int(file_name))+ '.jpg')
             image = cv2.imread(file_path)
 
             if transform:
