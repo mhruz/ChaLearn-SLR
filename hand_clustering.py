@@ -36,7 +36,7 @@ if __name__ == "__main__":
     parser.add_argument('--out_path', type=str, help='output path for cluster images', default="sign_clusters")
     parser.add_argument('--visualize', type=bool, help='whether to visualize')
     parser.add_argument('--threshold', type=float, help='threshold of hand pose estimation reliability', default=0.7)
-    parser.add_argument('--acceptance', type=float, help='acceptance rate of hand-shapes to be the same', default=0.05)
+    parser.add_argument('--acceptance', type=float, help='acceptance rate of hand-shapes to be the same', default=0.1)
     parser.add_argument('out_h5', type=str, help='output h5 dataset')
     args = parser.parse_args()
 
@@ -146,7 +146,7 @@ if __name__ == "__main__":
                     # add new found hand-shapes to the cluster
                     for hand_shape_index in same_hand_shapes:
                         sign_hand_clusters[sign_class]["sample"].append(sample)
-                        sign_hand_clusters[sign_class]["frame"].append(hand_shape_index)
+                        sign_hand_clusters[sign_class]["frame"].append(hand_shape_index.item())
 
         if args.hand_crops is not None:
             print(video_fn)

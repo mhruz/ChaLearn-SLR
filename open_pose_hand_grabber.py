@@ -130,9 +130,6 @@ if __name__ == "__main__":
 
     stats = {}
 
-    video_filenames = os.listdir(args.video_path)
-    video_filenames = [x for x in video_filenames if x.endswith("_color.mp4")]
-
     if args.out_h5 is not None:
         f = h5py.File(args.out_h5, "w")
 
@@ -152,16 +149,16 @@ if __name__ == "__main__":
 
     # random.shuffle(video_filenames)
 
-    kill = 0
-    for video_fn in video_filenames:
+    #kill = 0
+    for video_fn in joints_h5:
 
-        kill += 1
-        if kill == 5:
-            break
+        # kill += 1
+        # if kill == 10:
+        #     break
 
-        video = cv2.VideoCapture(os.path.join(args.video_path, video_fn))
+        video = cv2.VideoCapture(os.path.join(args.video_path, video_fn + ".mp4"))
         number_of_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
-        number_of_joint_frames = len(joints_h5[video_fn[:-4]])
+        number_of_joint_frames = len(joints_h5[video_fn])
         print("Processing video: {}".format(video_fn))
         frame = 0
 
@@ -187,14 +184,14 @@ if __name__ == "__main__":
 
         while frame < number_of_joint_frames:
 
-            ret, im = video.read()
-            if not ret:
-                break
-
-            joints = joints_h5[video_fn[:-4]][frame]
+            joints = joints_h5[video_fn][frame]
             # draw_joints(im, joints)
 
             if args.out_h5 is not None:
+                # grab image
+                ret, im = video.read()
+                if not ret:
+                    break
                 # get the right hand image
                 right_hand_image, mrh = get_right_hand(im, joints, square=True)
                 # get the left hand image
@@ -272,9 +269,39 @@ if __name__ == "__main__":
 
     if args.out_stat_dir:
         for speaker in stats:
-            plt.axes()
-            for sample in stats[speaker]:
-                plt.scatter(stats[speaker][sample]["left_hand_means"], stats[speaker][sample]["left_hand_stds"],
-                            c="blue")
+            print("Saving stats for {}".format(speaker))
+            fig = plt.figure()
+            fig.subplots_adjust(hspace=0.5)
+            ax1 = fig.add_subplot(211)
+            ax2 = fig.add_subplot(212)
 
-        plt.show()
+            for sample in stats[speaker]:
+                ax1.set_title("Left Hand")
+                ax1.scatter(stats[speaker][sample]["left_hand_means"], stats[speaker][sample]["left_hand_stds"],
+                            c="blue", s=4)
+
+                ax2.set_title("Right Hand")
+                ax2.scatter(stats[speaker][sample]["right_hand_means"], stats[speaker][sample]["right_hand_stds"],
+                            c="red", s=4)
+
+            ax1.set_xlabel("Mean")
+            ax1.set_ylabel("Std")
+            ax2.set_xlabel("Mean")
+            ax2.set_ylabel("Std")
+
+            ax1.set_xticks(np.arange(0, 1, 0.1))
+            ax2.set_xticks(np.arange(0, 1, 0.1))
+
+            ax1.set_xlim(0, 1)
+            ax1.set_ylim(0, 1)
+            ax2.set_xlim(0, 1)
+            ax2.set_ylim(0, 1)
+            fig.savefig(os.path.join(args.out_stat_dir, "{}.png".format(speaker)))
+            fig.close()
+
+        f_stats = h5py.File(os.path.join(args.out_stat_dir, "stats.h5"), "w")
+        f_stats.create_group(speaker)
+        data = stats[speaker][sample]
+        f_stats[speaker].create_dataset(sample, (4,),
+                                        data=[data["left_hand_means"], data["left_hand_stds"], data["right_hand_means"],
+                                              data["right_hand_stds"]])
