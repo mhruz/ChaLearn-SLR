@@ -43,7 +43,7 @@ if __name__ == "__main__":
         joints = np.reshape(joints, (-1, 3))[8:29]
         hp2 = joints[:, :2]
 
-        dist = compute_hand_pose_distance(hp1, hp2, metric_one=shoulder_length)
+        dist = compute_hand_pose_distance(hp1, hp2, metric_one=shoulder_length_target)
         dist_euclid = np.linalg.norm(((hp1 - np.mean(hp1)) / shoulder_length).flatten() -
                                      ((hp2 - np.mean(hp2)) / shoulder_length_target).flatten())
 
