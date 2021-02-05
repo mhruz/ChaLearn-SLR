@@ -21,7 +21,7 @@ from torch.optim import Adam, AdamW, SGD
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, CosineAnnealingLR, ReduceLROnPlateau
 from custom_losses import LabelSmoothingLoss, FocalLoss, FocalCosineLoss, SymmetricCrossEntropy, BiTemperedLogisticLoss
-from utils import DatasetFromImages, RecurrentCNN
+from utils import KeyFrameDataset, RecurrentCNN
 
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
@@ -157,7 +157,7 @@ if __name__ == '__main__':
     # ====================================================
     # Data loading
     # ====================================================
-    train = pd.read_csv(core_dir + '/data/train_list.csv')
+    train = pd.read_csv(core_dir + CFG['train_csv'])
 
     # ====================================================
     # Data split
@@ -198,8 +198,8 @@ if __name__ == '__main__':
         val_idx = folds[folds['fold'] == fold].index
         train_folds = folds.loc[trn_idx].reset_index(drop=True)
         valid_folds = folds.loc[val_idx].reset_index(drop=True)
-        train_dataset = DatasetFromImages(train_folds, CFG['data_path'], transform=get_transforms(data='train'))
-        dev_datasset = DatasetFromImages(valid_folds,  CFG['data_path'], transform=get_transforms(data='valid'))
+        train_dataset = KeyFrameDataset(train_folds, CFG['data_path'], transform=get_transforms(data='train'))
+        dev_datasset = KeyFrameDataset(valid_folds,  CFG['data_path'], transform=get_transforms(data='valid'))
 
         trainloader = DataLoader(train_dataset, batch_size=CFG['batch_size'], shuffle=True,
                                  num_workers=CFG['num_workers'],

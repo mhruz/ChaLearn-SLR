@@ -57,3 +57,40 @@ class RecurrentCNN(nn.Module):
         r_out, (h_n, h_c) = self.rnn(r_in)
         lin_out = self.linear(r_out[:, -1, :])
         return lin_out
+
+class KeyFrameDataset(Dataset):
+    # Loader from train_list_keyframes.csv
+    def __init__(self, df, data_path, transform=None):
+        self.df = df
+        self.video_names = df['id'].values
+        self.labels = df['label'].values
+        self.keyframes = df['keyframes'].values
+        self.data_path = data_path
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.df)
+
+    def read_images(self, video_name, keyframes, transform=None):
+        X = []
+        path_to_keyframes = video_name.replace('_', '/')
+        keyframes = keyframes[1:-1].split(',')
+        for file_name in keyframes:
+            file_path = os.path.join(self.data_path, path_to_keyframes, file_name+'.jpg')
+            image = cv2.imread(file_path)
+
+            if transform:
+                augmented = self.transform(image=image)
+                image = augmented['image']
+
+            X.append(image)
+        X = torch.stack(X, dim=0)
+
+        return X
+
+    def __getitem__(self, idx):
+        video_name = self.video_names[idx]
+        keyframes =  self.keyframes[idx]
+        X = self.read_images(video_name, keyframes, self.transform)
+        y = torch.tensor(self.labels[idx]).long()
+        return X, y
