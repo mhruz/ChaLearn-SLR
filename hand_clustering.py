@@ -1,11 +1,21 @@
 import argparse
 import csv
 import os
+import concurrent.futures
 
 import cv2
 import h5py
 import numpy as np
 from skimage import transform as tf
+
+
+def save_img(path, sample, frame, f_hand_crops):
+
+    img_idx = np.where(f_hand_crops["{}.mp4".format(sample)]["left_hand"]["frames"][:] == frame)
+    img = f_hand_crops["{}.mp4".format(sample)]["left_hand"]["images"][img_idx][0]
+    cv2.imwrite(path, img)
+
+    return True
 
 
 def compute_hand_pose_distance(hp_source, hp_target, metric_one=1):
@@ -36,7 +46,8 @@ if __name__ == "__main__":
     parser.add_argument('--out_path', type=str, help='output path for cluster images', default="sign_clusters")
     parser.add_argument('--visualize', type=bool, help='whether to visualize')
     parser.add_argument('--threshold', type=float, help='threshold of hand pose estimation reliability', default=0.7)
-    parser.add_argument('--acceptance', type=float, help='acceptance rate of hand-shapes to be the same', default=0.1)
+    parser.add_argument('--acceptance', type=float, help='acceptance rate of hand-shapes to be the same', default=0.0)
+    parser.add_argument('--max_dist', type=float, help='distance threshold to accept as the same shape', default=0.25)
     parser.add_argument('out_h5', type=str, help='output h5 dataset')
     args = parser.parse_args()
 
@@ -56,29 +67,40 @@ if __name__ == "__main__":
         samples_to_signs[sample_filename] = row[1]
 
     joints_h5 = h5py.File(args.open_pose_h5, "r")
+    # read joints into memory
+    # joints_data = {}
+    # for video_fn in joints_h5:
+    #     joints_data[video_fn] = joints_h5[video_fn][:]
+    joints_data = joints_h5
 
     sign_hand_clusters = {}
     seeders = {}
+    skip_frames = 5
 
-    for video_fn in joints_h5:
+    for video_fn in joints_data:
+        last_frame = 0
         sign_class = samples_to_signs[video_fn]
         if sign_class not in sign_hand_clusters:
             sign_hand_clusters[sign_class] = {"sample": [], "frame": []}
 
-        joints = joints_h5[video_fn][1]
+        joints = joints_data[video_fn][1]
         joints = np.reshape(joints, (-1, 3))
-        reference_shoulder_length = 0.5 * np.linalg.norm(joints[1, :2] - joints[2, :2]).item()
+        reference_shoulder_length = np.linalg.norm(joints[1, :2] - joints[2, :2]).item()
         starting_location = joints[7, :2]
 
         if sign_class not in seeders:
             seeders[sign_class] = []
 
-        for frame, _ in enumerate(joints_h5[video_fn]):
+        for frame, _ in enumerate(joints_data[video_fn]):
             if frame < 10:
                 continue
 
+            # skip hands from similar frames
+            if frame - last_frame < skip_frames:
+                continue
+
             # find a reliable hand-shape in this video
-            joints = joints_h5[video_fn][frame]
+            joints = joints_data[video_fn][frame]
             joints = np.reshape(joints, (-1, 3))
             mlh = np.mean(joints[8:29, 2])
 
@@ -93,10 +115,23 @@ if __name__ == "__main__":
                 if (video_fn, frame) in zip(sign_hand_clusters[sign_class]["sample"],
                                             sign_hand_clusters[sign_class]["frame"]):
                     continue
-                else:
-                    sign_hand_clusters[sign_class]["sample"].append(video_fn)
-                    sign_hand_clusters[sign_class]["frame"].append(frame)
-                    seeders[sign_class].append("{}{}".format(video_fn, frame))
+
+                # is similar hand-shape already in sign cluster?
+                for hand_sample, hand_frame in zip(sign_hand_clusters[sign_class]["sample"],
+                                                   sign_hand_clusters[sign_class]["frame"]):
+
+                    saved_hand = joints_data[hand_sample][hand_frame]
+                    saved_hand = np.reshape(saved_hand, (-1, 3))[8:29, :2]
+
+                    dist = compute_hand_pose_distance(saved_hand, reference_hand, reference_shoulder_length)
+
+                    if dist < args.max_dist:
+                        continue
+
+                sign_hand_clusters[sign_class]["sample"].append(video_fn)
+                sign_hand_clusters[sign_class]["frame"].append(frame)
+                seeders[sign_class].append("{}{}".format(video_fn, frame))
+                last_frame = frame
 
                 # search for the same hand-shapes in samples of the same sign
                 for sample in sign_to_samples[sign_class]:
@@ -104,19 +139,24 @@ if __name__ == "__main__":
                     if sample == video_fn:
                         continue
 
-                    target_joints = joints_h5[sample][0]
-                    target_joints = np.reshape(joints, (-1, 3))
-                    target_shoulder_length = 0.5 * np.linalg.norm(target_joints[1, :2] - target_joints[2, :2]).item()
+                    target_joints = joints_data[sample][0]
+                    target_joints = np.reshape(target_joints, (-1, 3))
+                    target_shoulder_length = np.linalg.norm(target_joints[1, :2] - target_joints[2, :2]).item()
                     target_starting_location = target_joints[7, :2]
 
-                    target_dists = 1000 * np.ones(len(joints_h5[sample]))
-                    for target_frame, _ in enumerate(joints_h5[sample]):
+                    target_dists = 1000 * np.ones(len(joints_data[sample]))
+                    small_distance_found = -1
+                    for target_frame, _ in enumerate(joints_data[sample]):
+                        # was small distance detected on previous frames?
+                        if 0 <= small_distance_found <= skip_frames:
+                            continue
+
                         # is this hand-shape already in sign clusters?
                         if (sample, target_frame) in zip(sign_hand_clusters[sign_class]["sample"],
                                                          sign_hand_clusters[sign_class]["frame"]):
                             continue
 
-                        target_joints = joints_h5[sample][target_frame]
+                        target_joints = joints_data[sample][target_frame]
                         target_joints = np.reshape(target_joints, (-1, 3))
                         mlh = np.mean(target_joints[8:29, 2])
                         if mlh < args.threshold:
@@ -131,12 +171,14 @@ if __name__ == "__main__":
                         target_dist = compute_hand_pose_distance(target_hand, reference_hand, reference_shoulder_length)
 
                         target_dists[target_frame] = target_dist
+                        if target_dist < args.max_dist:
+                            small_distance_found = target_frame
 
                     if len(target_dists) == 0:
                         continue
 
                     min_dist = np.min(target_dists)
-                    if min_dist > 0.5:
+                    if min_dist > args.max_dist * 1.25:
                         continue
 
                     dist_threshold = min_dist + min_dist * args.acceptance
@@ -144,46 +186,81 @@ if __name__ == "__main__":
                     same_hand_shapes = np.argwhere(target_dists <= dist_threshold)
 
                     # add new found hand-shapes to the cluster
+                    target_last_frame = 0
+                    saved_hand = None
                     for hand_shape_index in same_hand_shapes:
+                        # skip hands from similar frames
+                        if hand_shape_index.item() - target_last_frame < skip_frames:
+                            continue
+
+                        # skip hands with very similar shape
+                        if saved_hand is not None:
+                            new_hand = joints_data[sample][hand_shape_index.item()]
+                            new_hand = np.reshape(new_hand, (-1, 3))[8:29, :2]
+
+                            dist = compute_hand_pose_distance(new_hand, saved_hand, target_shoulder_length)
+
+                            if dist < args.max_dist:
+                                continue
+
                         sign_hand_clusters[sign_class]["sample"].append(sample)
                         sign_hand_clusters[sign_class]["frame"].append(hand_shape_index.item())
+                        target_last_frame = hand_shape_index.item()
+                        saved_hand = joints_data[sample][hand_shape_index.item()]
+                        saved_hand = np.reshape(saved_hand, (-1, 3))[8:29, :2]
 
         if args.hand_crops is not None:
             print(video_fn)
             print(sign_class)
             im_ref = None
-            for i, (sample, frame) in enumerate(
-                    zip(sign_hand_clusters[sign_class]["sample"], sign_hand_clusters[sign_class]["frame"])):
+            if args.visualize is None:
+                os.makedirs(os.path.join(args.out_path, sign_class), exist_ok=True)
 
-                img_idx = np.where(f_hand_crops["{}.mp4".format(sample)]["left_hand"]["frames"][:] == frame)
+            future_to_args = {}
 
-                img = f_hand_crops["{}.mp4".format(sample)]["left_hand"]["images"][img_idx][0]
+            with concurrent.futures.ThreadPoolExecutor(max_workers=None) as executor:
+                for i, (sample, frame) in enumerate(
+                        zip(sign_hand_clusters[sign_class]["sample"], sign_hand_clusters[sign_class]["frame"])):
 
-                if args.visualize is None:
-                    os.makedirs(os.path.join(args.out_path, sign_class), exist_ok=True)
-                    cv2.imwrite(os.path.join(args.out_path, sign_class, "{}{}.jpg".format(sample, frame)), img)
+                    if args.visualize is None:
+                        path = os.path.join(args.out_path, sign_class, "{}{}.jpg".format(sample, frame))
+                        future_to_args[executor.submit(save_img, path, sample, frame, f_hand_crops)] = path
+                    else:
+                        img_idx = np.where(f_hand_crops["{}.mp4".format(sample)]["left_hand"]["frames"][:] == frame)
+                        img = f_hand_crops["{}.mp4".format(sample)]["left_hand"]["images"][img_idx][0]
 
-                if "{}{}".format(sample, frame) in seeders[samples_to_signs[sample]]:
-                    print("{}{}".format(sample, frame))
-                    im_ref = img
+                    if "{}{}".format(sample, frame) in seeders[samples_to_signs[sample]]:
+                        print("{}{}".format(sample, frame))
+                        if args.visualize is not None:
+                            im_ref = img
+
+                    if args.visualize is not None:
+                        cv2.namedWindow("{}{}".format(sample, frame), 2)
+                        cv2.moveWindow("{}{}".format(sample, frame), i % 12 % 4 * 350, i % 12 // 4 * 350)
+                        cv2.imshow("{}{}".format(sample, frame), img)
+
+                        if (i+1) % 12 == 0:
+                            if im_ref is not None:
+                                cv2.namedWindow("ref", 2)
+                                cv2.moveWindow("ref", 4 * 350, 0)
+                                cv2.imshow("ref", im_ref)
+                            cv2.waitKey()
+                            cv2.destroyAllWindows()
 
                 if args.visualize is not None:
-                    cv2.namedWindow("{}{}".format(sample, frame), 2)
-                    cv2.moveWindow("{}{}".format(sample, frame), i % 12 % 4 * 350, i % 12 // 3 * 350)
-                    cv2.imshow("{}{}".format(sample, frame), img)
+                    if im_ref is not None:
+                        cv2.namedWindow("ref", 2)
+                        cv2.moveWindow("ref", 4 * 350, 0)
+                        cv2.imshow("ref", im_ref)
+                    cv2.waitKey()
+                    cv2.destroyAllWindows()
 
-                    if (i+1) % 12 == 0:
-                        if im_ref is not None:
-                            cv2.namedWindow("ref", 2)
-                            cv2.moveWindow("ref", 4 * 350, 0)
-                            cv2.imshow("ref", im_ref)
-                        cv2.waitKey()
-                        cv2.destroyAllWindows()
-
-            if args.visualize is not None:
-                if im_ref is not None:
-                    cv2.namedWindow("ref", 2)
-                    cv2.moveWindow("ref", 4 * 350, 0)
-                    cv2.imshow("ref", im_ref)
-                cv2.waitKey()
-                cv2.destroyAllWindows()
+                if args.visualize is None:
+                    for future in concurrent.futures.as_completed(future_to_args):
+                        path = future_to_args[future]
+                        try:
+                            result = future.result()
+                        except Exception as exc:
+                            print("Saving image {} generated an exception: {}".format(path, exc))
+                        else:
+                            print("Image {} saved successfully.".format(path))
