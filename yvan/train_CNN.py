@@ -12,6 +12,7 @@ from shutil import copyfile
 
 import numpy as np
 import pandas as pd
+import timm
 
 from sklearn.model_selection import StratifiedKFold, train_test_split
 
@@ -20,8 +21,8 @@ import torch.nn as nn
 from torch.optim import Adam, AdamW, SGD
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, CosineAnnealingLR, ReduceLROnPlateau
-from custom_losses import LabelSmoothingLoss, FocalLoss, FocalCosineLoss, SymmetricCrossEntropy, BiTemperedLogisticLoss
-from utils import KeyFrameDataset, RecurrentCNN
+from utils.custom_losses import LabelSmoothingLoss, FocalLoss, FocalCosineLoss, SymmetricCrossEntropy, BiTemperedLogisticLoss
+from utils.dataset_utils import SingleFrameDataset
 
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
@@ -53,7 +54,7 @@ def get_transforms(data):
             A.Resize(CFG['size'], CFG['size']),
             # A.RandomResizedCrop(CFG['size'], CFG['size'], scale=(0.8, 1.0)),
             # A.Transpose(p=0.5),
-            # A.HorizontalFlip(p=0.5),
+            A.HorizontalFlip(p=0.5),
             # A.VerticalFlip(p=0.5),
             # A.ShiftScaleRotate(p=0.5),
             A.Normalize(
@@ -72,6 +73,18 @@ def get_transforms(data):
             ),
             ToTensorV2(),
         ])
+
+
+# ====================================================
+# Model
+# ====================================================
+def getModel(architecture_name, target_size, pretrained=False):
+    net = timm.create_model(architecture_name, pretrained=pretrained)
+    net_cfg = net.default_cfg
+    last_layer = net_cfg['classifier']
+    num_ftrs = getattr(net, last_layer).in_features
+    setattr(net, last_layer, nn.Linear(num_ftrs, target_size))
+    return net
 
 
 # ====================================================
@@ -134,7 +147,7 @@ if __name__ == '__main__':
     # '/storage/plzen1/home/grubiv/ChaLearn'
     parser = argparse.ArgumentParser()
     parser.add_argument('-core_directory', type=str, default='/storage/plzen1/home/grubiv/ChaLearn', help='Core directory')
-    parser.add_argument('-config_file', type=str, default='config.yml', help='Config file')
+    parser.add_argument('-config_file', type=str, default='config1.yml', help='Config file')
     args = parser.parse_args()
     core_dir = args.core_directory
 
@@ -186,7 +199,9 @@ if __name__ == '__main__':
         # ====================================================
         # model & optimizer
         # ====================================================
-        model = RecurrentCNN(CFG['target_size'], CFG['model_name'], True, CFG['hidden_size'], CFG['LSTM_layers'])
+        model = getModel(CFG['model_name'], CFG['target_size'], pretrained=True)
+        CFG['mean'] = list(model.default_cfg['mean'])
+        CFG['std'] = list(model.default_cfg['std'])
         model.to(device)
         optimizer = get_optimizer()
         scheduler = get_scheduler(optimizer)
@@ -198,8 +213,8 @@ if __name__ == '__main__':
         val_idx = folds[folds['fold'] == fold].index
         train_folds = folds.loc[trn_idx].reset_index(drop=True)
         valid_folds = folds.loc[val_idx].reset_index(drop=True)
-        train_dataset = KeyFrameDataset(train_folds, CFG['data_path'], transform=get_transforms(data='train'))
-        dev_datasset = KeyFrameDataset(valid_folds,  CFG['data_path'], transform=get_transforms(data='valid'))
+        train_dataset = SingleFrameDataset(train_folds, CFG['data_path'], transform=get_transforms(data='train'))
+        dev_datasset = SingleFrameDataset(valid_folds,  CFG['data_path'], transform=get_transforms(data='valid'))
 
         trainloader = DataLoader(train_dataset, batch_size=CFG['batch_size'], shuffle=True,
                                  num_workers=CFG['num_workers'],
