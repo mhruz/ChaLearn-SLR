@@ -49,7 +49,7 @@ if __name__ == "__main__":
     parser.add_argument('--n_best', type=int, help='how many best hand-shapes to try to get from one video', default=5)
     parser.add_argument('--acceptance', type=float, help='acceptance rate of hand-shapes to be the same', default=0.0)
     parser.add_argument('--max_dist', type=float, help='distance threshold to accept as the same shape', default=0.42)
-    parser.add_argument('--joints_to_mem', type=float, help='read joints data to memory')
+    parser.add_argument('--joints_to_mem', type=bool, help='read joints data to memory')
     parser.add_argument('out_h5', type=str, help='output h5 dataset')
     args = parser.parse_args()
 
