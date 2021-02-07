@@ -4,9 +4,9 @@ model_name : 'tf_efficientnet_b3_ns'
 train_csv: '/data/train_list_keyframes.csv'
 print_freq : 1000
 seed : 42
-num_workers : 6
+num_workers : 0
 size : 256
-epochs : 15
+epochs : 30
 batch_size : 1
 scheduler : 'CosineAnnealingWarmRestarts'  # ['ReduceLROnPlateau', 'CosineAnnealingLR', 'CosineAnnealingWarmRestarts']
 factor : 0.9    # ReduceLROnPlateau
@@ -23,15 +23,15 @@ gradient_accumulation_steps : 1
 max_grad_norm : 1000
 target_size : 226
 target_col : 'label'
-n_fold : 2
+n_fold : 1
 test_size: 0.2  # n_fold == 1
 saveEachEpoch : False
 mean : [0.485, 0.456, 0.406]
 std : [0.229, 0.224, 0.225]
 trn_fold : [0, 1, 2, 3, 4]
-criterion: 'LabelSmoothing'   # ['CrossEntropyLoss', 'LabelSmoothing', 'FocalLoss', 'FocalCosineLoss', 'SymmetricCrossEntropyLoss', 'BiTemperedLoss']
+criterion: 'CrossEntropyLoss'   # ['CrossEntropyLoss', 'LabelSmoothing', 'FocalLoss', 'FocalCosineLoss', 'SymmetricCrossEntropyLoss', 'BiTemperedLoss']
 smoothing : 0.1    # LabelSmoothing, BiTemperedLoss
 t1: 0.8   # BiTemperedLoss
 t2: 1.4   # BiTemperedLoss
-hidden_size: 128
+hidden_size: 64
 LSTM_layers: 1

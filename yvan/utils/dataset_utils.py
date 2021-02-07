@@ -2,10 +2,7 @@ import torch
 from torch.utils.data import Dataset
 import cv2
 import os
-import timm
-import torch.nn as nn
-import sys
-
+from torch.nn.utils.rnn import pad_sequence
 
 class DatasetFromImages(Dataset):
     # Loader from train_list.csv
@@ -41,23 +38,6 @@ class DatasetFromImages(Dataset):
         y = torch.tensor(self.labels[idx]).long()
         return X, y
 
-
-class RecurrentCNN(nn.Module):
-    def __init__(self, num_classes, architecture_name, pretrained, hidden_size, num_layers):
-        super().__init__()
-        self.feature_extractor = timm.create_model(architecture_name, pretrained=pretrained, num_classes=0)
-        num_features = self.feature_extractor.num_features
-        self.rnn = nn.LSTM(input_size=num_features, hidden_size=hidden_size, num_layers=num_layers, batch_first=True)
-        self.linear = nn.Linear(hidden_size, num_classes)
-
-    def forward(self, x):
-        batch_size, timesteps, C, H, W = x.size()
-        c_in = x.view(batch_size * timesteps, C, H, W)
-        c_out = self.feature_extractor(c_in)
-        r_in = c_out.view(batch_size, timesteps, -1)
-        r_out, (h_n, h_c) = self.rnn(r_in)
-        lin_out = self.linear(r_out[:, -1, :])
-        return lin_out
 
 class KeyFrameDataset(Dataset):
     # Loader from train_list_keyframes.csv
@@ -96,7 +76,46 @@ class KeyFrameDataset(Dataset):
 
     def __getitem__(self, idx):
         video_name = self.video_names[idx]
-        keyframes =  self.keyframes[idx]
+        keyframes = self.keyframes[idx]
         X = self.read_images(video_name, keyframes, self.transform)
         y = torch.tensor(self.labels[idx]).long()
         return X, y
+
+class SingleFrameDataset(Dataset):
+    def __init__(self, df, data_path, transform=None):
+        self.df = df
+        self.folders = df['id'].values
+        self.file_names = df['frame'].values
+        self.labels = df['label'].values
+        self.data_path = data_path
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.df)
+
+    def __getitem__(self, idx):
+        folder = self.folders[idx].replace('_', '/')
+        file_name = self.file_names[idx]
+        if int(file_name) < 10:
+            file_path = os.path.join(self.data_path, folder, 'frame_00' + str(file_name) + '.jpg')
+        elif int(file_name) < 100:
+            file_path = os.path.join(self.data_path, folder, 'frame_0' + str(file_name) + '.jpg')
+        else:
+            file_path = os.path.join(self.data_path, folder, 'frame_' + str(file_name) + '.jpg')
+        image = cv2.imread(file_path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        if self.transform:
+            augmented = self.transform(image=image)
+            image = augmented['image']
+        label = torch.tensor(self.labels[idx]).long()
+        return image, label
+
+def pad_collate(batch):
+  (xx, yy) = zip(*batch)
+  # x_lens = [len(x) for x in xx]
+  # y_lens = [len(y) for y in yy]
+
+  xx_pad = pad_sequence(xx, batch_first=True, padding_value=0)
+  # yy_pad = pad_sequence(yy, batch_first=True, padding_value=0)
+
+  return xx_pad, yy
