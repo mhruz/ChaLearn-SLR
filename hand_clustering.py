@@ -70,10 +70,10 @@ if __name__ == "__main__":
 
     joints_h5 = h5py.File(args.open_pose_h5, "r")
     # read joints into memory
-    # joints_data = {}
-    # for video_fn in joints_h5:
-    #     joints_data[video_fn] = joints_h5[video_fn][:]
-    joints_data = joints_h5
+    joints_data = {}
+    for video_fn in joints_h5:
+        joints_data[video_fn] = joints_h5[video_fn][:]
+    #joints_data = joints_h5
     samples = list(joints_h5.keys())
     random.shuffle(samples)
 
