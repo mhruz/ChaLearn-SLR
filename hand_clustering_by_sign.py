@@ -11,7 +11,6 @@ from skimage import transform as tf
 
 
 def save_img(path, sample, frame, f_hand_crops):
-
     img_idx = np.where(f_hand_crops["{}.mp4".format(sample)]["left_hand"]["frames"][:] == frame)
     img = f_hand_crops["{}.mp4".format(sample)]["left_hand"]["images"][img_idx][0]
     cv2.imwrite(path, img)
@@ -218,7 +217,7 @@ if __name__ == "__main__":
                 saved_hand = None
                 for hand_shape_index in same_hand_shapes:
                     # skip hands from similar frames
-                    #if hand_shape_index.item() - target_last_frame < skip_frames:
+                    # if hand_shape_index.item() - target_last_frame < skip_frames:
                     if hand_shape_index.item() < skip_frames:
                         continue
 
@@ -268,7 +267,7 @@ if __name__ == "__main__":
                         cv2.moveWindow("{}{}".format(sample, frame), i % 12 % 4 * 350, i % 12 // 4 * 350)
                         cv2.imshow("{}{}".format(sample, frame), img)
 
-                        if (i+1) % 12 == 0:
+                        if (i + 1) % 12 == 0:
                             if im_ref is not None:
                                 cv2.namedWindow("ref", 2)
                                 cv2.moveWindow("ref", 4 * 350, 0)
@@ -293,3 +292,19 @@ if __name__ == "__main__":
                             print("Saving image {} generated an exception: {}".format(path, exc))
                         else:
                             print("Image {} saved successfully.".format(path))
+
+    # save the results
+    f_out = h5py.File(args.out_h5, "w")
+    string_dt = h5py.special_dtype(vlen=str)
+
+    for sign_class in sign_hand_clusters:
+        f_out.create_group(sign_class)
+        number_of_samples = len(sign_hand_clusters[sign_class]["frame"])
+        f_out[sign_class].create_dataset("frames", (number_of_samples,), data=sign_hand_clusters[sign_class]["frame"],
+                                         dtype=np.int32)
+        f_out[sign_class].create_dataset("samples", (number_of_samples,),
+                                         data=sign_hand_clusters[sign_class]["sample"], dtype=string_dt)
+        f_out[sign_class].create_dataset("seeders", (len(seeders[sign_class]),), data=seeders[sign_class],
+                                         dtype=string_dt)
+
+    f_out.close()
