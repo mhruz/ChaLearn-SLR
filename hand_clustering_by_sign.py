@@ -72,7 +72,7 @@ if __name__ == "__main__":
     joints_data = {}
     for video_fn in joints_h5:
         joints_data[video_fn] = joints_h5[video_fn][:]
-    #joints_data = joints_h5
+    # joints_data = joints_h5
     samples = list(joints_h5.keys())
     random.shuffle(samples)
 
@@ -86,13 +86,13 @@ if __name__ == "__main__":
         if sign_class not in sign_hand_clusters:
             sign_hand_clusters[sign_class] = {"sample": [], "frame": []}
 
+        if sign_class not in seeders:
+            seeders[sign_class] = {"sample": [], "frame": []}
+
         joints = joints_data[video_fn][0]
         joints = np.reshape(joints, (-1, 3))
         reference_shoulder_length = np.linalg.norm(joints[1, :2] - joints[2, :2]).item()
         starting_location = joints[7, :2]
-
-        if sign_class not in seeders:
-            seeders[sign_class] = []
 
         # analyze the Open Pose confidence to guess the representative hand-shapes
         left_hand_conf_means = np.zeros(len(joints_data[video_fn]))
@@ -107,7 +107,7 @@ if __name__ == "__main__":
 
         # get the N best hand-shapes (from args)
         # if the hand didn't move, ignore the whole sample (left-handed?)
-        if np.count_nonzero(left_hand_conf_means) == left_hand_conf_means.shape[0]:
+        if np.count_nonzero(left_hand_conf_means) == 0:
             continue
 
         # argpartition note: sorts from small to large, we want the args.n_best largest
@@ -157,12 +157,13 @@ if __name__ == "__main__":
 
             sign_hand_clusters[sign_class]["sample"].append(video_fn)
             sign_hand_clusters[sign_class]["frame"].append(frame)
-            seeders[sign_class].append("{}{}".format(video_fn, frame))
+            seeders[sign_class]["sample"].append(video_fn)
+            seeders[sign_class]["frame"].append(frame)
             last_frame = frame
 
             # search for the same hand-shapes in samples of the same sign
             for sample in sign_to_samples[sign_class]:
-                # ignore measuring sample with its-self
+                # ignore measuring sample with it-self
                 if sample == video_fn:
                     continue
 
@@ -171,11 +172,12 @@ if __name__ == "__main__":
                 target_shoulder_length = np.linalg.norm(target_joints[1, :2] - target_joints[2, :2]).item()
                 target_starting_location = target_joints[7, :2]
 
-                target_dists = 1000 * np.ones(len(joints_data[sample]))
-                small_distance_found = -1
-                for target_frame, _ in enumerate(joints_data[sample]):
+                number_of_samples = len(joints_data[sample])
+                target_dists = 1000 * np.ones(number_of_samples)
+                small_distance_found = number_of_samples
+                for target_frame, target_joints in enumerate(joints_data[sample]):
                     # was small distance detected on previous frames?
-                    if 0 <= small_distance_found <= skip_frames:
+                    if 0 <= target_frame - small_distance_found <= skip_frames:
                         continue
 
                     # is this hand-shape already in sign clusters?
@@ -183,9 +185,9 @@ if __name__ == "__main__":
                                                      sign_hand_clusters[sign_class]["frame"]):
                         continue
 
-                    target_joints = joints_data[sample][target_frame]
                     target_joints = np.reshape(target_joints, (-1, 3))
                     mlh = np.mean(target_joints[8:29, 2])
+                    # low Open Pose confidence
                     if mlh < args.threshold:
                         continue
 
@@ -201,7 +203,7 @@ if __name__ == "__main__":
                     if target_dist < args.max_dist:
                         small_distance_found = target_frame
 
-                if len(target_dists) == 0:
+                if np.count_nonzero(target_dists) == 0:
                     continue
 
                 min_dist = np.min(target_dists)
@@ -216,8 +218,7 @@ if __name__ == "__main__":
                 target_last_frame = 0
                 saved_hand = None
                 for hand_shape_index in same_hand_shapes:
-                    # skip hands from similar frames
-                    # if hand_shape_index.item() - target_last_frame < skip_frames:
+                    # skip hands from first frames
                     if hand_shape_index.item() < skip_frames:
                         continue
 
@@ -257,7 +258,7 @@ if __name__ == "__main__":
                         img_idx = np.where(f_hand_crops["{}.mp4".format(sample)]["left_hand"]["frames"][:] == frame)
                         img = f_hand_crops["{}.mp4".format(sample)]["left_hand"]["images"][img_idx][0]
 
-                    if "{}{}".format(sample, frame) in seeders[samples_to_signs[sample]]:
+                    if (sample, frame) in zip(seeders[sign_class]["sample"], seeders[sign_class]["frame"]):
                         print("{}{}".format(sample, frame))
                         if args.visualize is not None:
                             im_ref = img
@@ -304,7 +305,10 @@ if __name__ == "__main__":
                                          dtype=np.int32)
         f_out[sign_class].create_dataset("samples", (number_of_samples,),
                                          data=sign_hand_clusters[sign_class]["sample"], dtype=string_dt)
-        f_out[sign_class].create_dataset("seeders", (len(seeders[sign_class]),), data=seeders[sign_class],
-                                         dtype=string_dt)
+        f_out[sign_class].create_group("seeders")
+        f_out[sign_class]["seeders"].create_dataset("frames", (len(seeders[sign_class]["frame"]),),
+                                                    data=seeders[sign_class]["frame"], dtype=np.int32)
+        f_out[sign_class]["seeders"].create_dataset("samples", (len(seeders[sign_class]["sample"]),),
+                                                    data=seeders[sign_class]["frame"], dtype=string_dt)
 
     f_out.close()
