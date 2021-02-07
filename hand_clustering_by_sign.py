@@ -49,6 +49,7 @@ if __name__ == "__main__":
     parser.add_argument('--n_best', type=int, help='how many best hand-shapes to try to get from one video', default=5)
     parser.add_argument('--acceptance', type=float, help='acceptance rate of hand-shapes to be the same', default=0.0)
     parser.add_argument('--max_dist', type=float, help='distance threshold to accept as the same shape', default=0.42)
+    parser.add_argument('--joints_to_mem', type=float, help='read joints data to memory')
     parser.add_argument('out_h5', type=str, help='output h5 dataset')
     args = parser.parse_args()
 
@@ -69,10 +70,13 @@ if __name__ == "__main__":
 
     joints_h5 = h5py.File(args.open_pose_h5, "r")
     # read joints into memory
-    joints_data = {}
-    for video_fn in joints_h5:
-        joints_data[video_fn] = joints_h5[video_fn][:]
-    # joints_data = joints_h5
+    if args.joints_to_mem is not None:
+        joints_data = {}
+        for video_fn in joints_h5:
+            joints_data[video_fn] = joints_h5[video_fn][:]
+    else:
+        joints_data = joints_h5
+        
     samples = list(joints_h5.keys())
     random.shuffle(samples)
 
@@ -255,8 +259,8 @@ if __name__ == "__main__":
                         path = os.path.join(args.out_path, sign_class, "{}{}.jpg".format(sample, frame))
                         future_to_args[executor.submit(save_img, path, sample, frame, f_hand_crops)] = path
                     else:
-                        img_idx = np.where(f_hand_crops["{}.mp4".format(sample)]["left_hand"]["frames"][:] == frame)
-                        img = f_hand_crops["{}.mp4".format(sample)]["left_hand"]["images"][img_idx][0]
+                        img_idx = np.where(f_hand_crops["{}".format(sample)]["left_hand"]["frames"][:] == frame)
+                        img = f_hand_crops["{}".format(sample)]["left_hand"]["images"][img_idx][0]
 
                     if (sample, frame) in zip(seeders[sign_class]["sample"], seeders[sign_class]["frame"]):
                         print("{}{}".format(sample, frame))
