@@ -11,8 +11,8 @@ from skimage import transform as tf
 
 
 def save_img(path, sample, frame, f_hand_crops):
-    img_idx = np.where(f_hand_crops["{}.mp4".format(sample)]["left_hand"]["frames"][:] == frame)
-    img = f_hand_crops["{}.mp4".format(sample)]["left_hand"]["images"][img_idx][0]
+    img_idx = np.where(f_hand_crops["{}".format(sample)]["left_hand"]["frames"][:] == frame)
+    img = f_hand_crops["{}".format(sample)]["left_hand"]["images"][img_idx][0]
     cv2.imwrite(path, img)
 
     return True
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     parser.add_argument('--n_best', type=int, help='how many best hand-shapes to try to get from one video', default=5)
     parser.add_argument('--acceptance', type=float, help='acceptance rate of hand-shapes to be the same', default=0.0)
     parser.add_argument('--max_dist', type=float, help='distance threshold to accept as the same shape', default=0.42)
-    parser.add_argument('--joints_to_mem', type=float, help='read joints data to memory')
+    parser.add_argument('--joints_to_mem', type=bool, help='read joints data to memory')
     parser.add_argument('out_h5', type=str, help='output h5 dataset')
     args = parser.parse_args()
 
@@ -313,6 +313,6 @@ if __name__ == "__main__":
         f_out[sign_class]["seeders"].create_dataset("frames", (len(seeders[sign_class]["frame"]),),
                                                     data=seeders[sign_class]["frame"], dtype=np.int32)
         f_out[sign_class]["seeders"].create_dataset("samples", (len(seeders[sign_class]["sample"]),),
-                                                    data=seeders[sign_class]["frame"], dtype=string_dt)
+                                                    data=seeders[sign_class]["sample"], dtype=string_dt)
 
     f_out.close()
