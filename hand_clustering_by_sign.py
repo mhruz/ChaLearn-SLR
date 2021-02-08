@@ -11,8 +11,8 @@ from skimage import transform as tf
 
 
 def save_img(path, sample, frame, f_hand_crops):
-    img_idx = np.where(f_hand_crops["{}.mp4".format(sample)]["left_hand"]["frames"][:] == frame)
-    img = f_hand_crops["{}.mp4".format(sample)]["left_hand"]["images"][img_idx][0]
+    img_idx = np.where(f_hand_crops["{}".format(sample)]["left_hand"]["frames"][:] == frame)
+    img = f_hand_crops["{}".format(sample)]["left_hand"]["images"][img_idx][0]
     cv2.imwrite(path, img)
 
     return True
@@ -313,6 +313,6 @@ if __name__ == "__main__":
         f_out[sign_class]["seeders"].create_dataset("frames", (len(seeders[sign_class]["frame"]),),
                                                     data=seeders[sign_class]["frame"], dtype=np.int32)
         f_out[sign_class]["seeders"].create_dataset("samples", (len(seeders[sign_class]["sample"]),),
-                                                    data=seeders[sign_class]["frame"], dtype=string_dt)
+                                                    data=seeders[sign_class]["sample"], dtype=string_dt)
 
     f_out.close()
