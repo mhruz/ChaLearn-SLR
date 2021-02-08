@@ -76,7 +76,7 @@ if __name__ == "__main__":
             joints_data[video_fn] = joints_h5[video_fn][:]
     else:
         joints_data = joints_h5
-        
+
     samples = list(joints_h5.keys())
     random.shuffle(samples)
 
