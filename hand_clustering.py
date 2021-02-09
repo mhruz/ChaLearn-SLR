@@ -95,12 +95,15 @@ if __name__ == "__main__":
     else:
         sign_clusters_data = f_sign_clusters
 
-    sign_hand_clusters = []
+    sign_hand_clusters = {}
 
     # compute distances of hand-shapes in one sign to create sub-clusters of sign hand-shapes
     # since we have a per-pair custom distance function, we need to do it the old-fashioned way
     for sign_class in sign_clusters_data:
         print("Processing sign {}\n".format(sign_class))
+        if sign_class not in sign_hand_clusters:
+            sign_hand_clusters[sign_class] = []
+
         sample_strings = []
         number_of_samples = len(sign_clusters_data[sign_class]["samples"])
         distance_matrix = np.zeros((number_of_samples, number_of_samples))
@@ -136,7 +139,7 @@ if __name__ == "__main__":
         hand_added = False
         for same_hand_pose_idx in same_clusters:
             # try to find the indexes in clusters
-            for cluster in sign_hand_clusters:
+            for cluster in sign_hand_clusters[sign_class]:
                 # if the sample is already there, try to add the other one
                 if sample_strings[same_hand_pose_idx[0]] in cluster:
                     if sample_strings[same_hand_pose_idx[1]] not in cluster:
@@ -154,7 +157,7 @@ if __name__ == "__main__":
 
             # if both of the samples were not in any cluster, add a new cluster
             if not hand_added:
-                sign_hand_clusters.append(
+                sign_hand_clusters[sign_class].append(
                     [sample_strings[same_hand_pose_idx[0]], sample_strings[same_hand_pose_idx[1]]])
 
         end = time.time()
@@ -163,4 +166,4 @@ if __name__ == "__main__":
 
     print("Done")
 
-    pickle.dump(sign_hand_clusters, open("sign_hand_clusters_v03_02.p", "wb"))
+    pickle.dump(sign_hand_clusters, open("sign_hand_clusters_v03_03.p", "wb"))
