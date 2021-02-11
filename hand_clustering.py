@@ -237,6 +237,134 @@ def agglomerative_clustering(hand_samples, max_distance, distances, hand_crops, 
     return out_clusters
 
 
+def agglomerative_clustering_mean(hand_samples, max_distance, distances, hand_crops, joints, visualize=False):
+    clustering = {'hand_samples': hand_samples, 'clusters': []}
+    clusters = []
+    representatives = []
+    cluster_state = [[x] for x in range(len(hand_samples["samples"]))]
+    orig_distances = np.copy(distances)
+
+    for i, hs in enumerate(hand_samples["samples"]):
+        clusters.append([{'idx': i, 'samples': hs}])
+        representatives.append(i)
+
+    s = time.time()
+
+    while len(clusters) > 1:
+        print('Step {}/{}'.format(len(hand_samples["samples"]) - len(clusters) + 1, len(hand_samples["samples"]) - 1))
+        # find the minimum distance
+        mask = np.ones_like(distances, dtype=np.bool)
+        mask = np.tril(mask, 0)
+        masked_distances = np.ma.masked_array(distances, mask)
+
+        min_dist = masked_distances.min()
+
+        print(min_dist)
+
+        if min_dist > max_distance and visualize:
+            if np.isinf(min_dist):
+                break
+
+            mins = np.where(orig_distances == min_dist)
+            sample_a = hand_samples["samples"][mins[0][0]].decode("utf-8")
+            sample_b = hand_samples["samples"][mins[1][0]].decode("utf-8")
+            frame_a = hand_samples["frames"][mins[0][0]]
+            frame_b = hand_samples["frames"][mins[1][0]]
+
+            img_idx = np.where(hand_crops["{}".format(sample_a)]["left_hand"]["frames"][:] == frame_a)
+            hand_img = hand_crops["{}".format(sample_a)]["left_hand"]["images"][img_idx][0]
+            cv2.namedWindow("{}_{}".format(sample_a, frame_a), 2)
+            cv2.moveWindow("{}_{}".format(sample_a, frame_a), 350, 350)
+            cv2.imshow("{}_{}".format(sample_a, frame_a), hand_img)
+
+            img_idx = np.where(hand_crops["{}".format(sample_b)]["left_hand"]["frames"][:] == frame_b)
+            hand_img = hand_crops["{}".format(sample_b)]["left_hand"]["images"][img_idx][0]
+            cv2.namedWindow("{}_{}".format(sample_b, frame_b), 2)
+            cv2.moveWindow("{}_{}".format(sample_b, frame_b), 700, 350)
+            cv2.imshow("{}_{}".format(sample_b, frame_b), hand_img)
+
+            joints_sample_a = joints[sample_a][:].reshape(-1, 3)
+            joints_sample_a = joints_sample_a[8:29, 2]
+
+            print("Sample_a conf: {}".format(np.mean(joints_sample_a)))
+
+            joints_sample_b = joints[sample_b][:].reshape(-1, 3)
+            joints_sample_b = joints_sample_b[8:29, 2]
+
+            print("Sample_b conf: {}".format(np.mean(joints_sample_b)))
+
+        if min_dist > max_distance:
+            print("I refuse to merge these images! distance={}".format(min_dist))
+            cv2.waitKey()
+            cv2.destroyAllWindows()
+            break
+        else:
+            # cv2.waitKey()
+            cv2.destroyAllWindows()
+
+        mins = np.ma.where(masked_distances == masked_distances.min())
+        # min_i is always the larger cluster
+        if len(clusters[mins[0][0]]) >= len(clusters[mins[1][0]]):
+            min_i = mins[0][0]
+            min_j = mins[1][0]
+        else:
+            min_i = mins[1][0]
+            min_j = mins[0][0]
+
+        # join clusters min_i and min_j
+        clusters[min_i].extend(clusters[min_j])
+        cluster_state[min_i].extend(cluster_state[min_j])
+
+        # recompute the distances
+        # choose a representative sample of the min_i cluster - that has the smallest distance from all other in cluster
+        sum_dist = np.zeros(len(clusters[min_i]))
+        for i, idx_1 in enumerate(clusters[min_i]):
+            for idx_2 in clusters[min_i]:
+                if idx_1["idx"] == idx_2["idx"]:
+                    continue
+
+                a = min(idx_1["idx"], idx_2["idx"])
+                b = max(idx_1["idx"], idx_2["idx"])
+                sum_dist[i] += orig_distances[a, b]
+
+        representatives[min_i] = clusters[min_i][np.argmin(sum_dist)]["idx"]
+        repre_distances = np.zeros_like(representatives, dtype=np.float)
+
+        for i, repre in enumerate(representatives):
+            if i == min_i or i == min_j:
+                continue
+
+            a = min(representatives[min_i], repre)
+            b = max(representatives[min_i], repre)
+
+            repre_distances[i] = orig_distances[a, b]
+
+        distances[:min_i, min_i] = repre_distances[:min_i]
+        distances[min_i, min_i:] = repre_distances[min_i:]
+
+        distances = np.delete(distances, min_j, 0)
+        distances = np.delete(distances, min_j, 1)
+
+        # remove the appropriate data
+        del clusters[min_j]
+        del cluster_state[min_j]
+        representatives = np.delete(representatives, min_j)
+
+        clustering['clusters'].append({'clusters': copy.deepcopy(cluster_state)})
+
+    e = time.time()
+    print('Clustering computation: {} s'.format(e - s))
+
+    # get rid of the singleton clusters
+    clusters = clustering["clusters"][-1]["clusters"]
+    out_clusters = []
+    for c in clusters:
+        if len(c) > 1:
+            out_clusters.append(c)
+
+    return out_clusters
+
+
 if __name__ == "__main__":
     # parse commandline
     parser = argparse.ArgumentParser(description='Clusters hands by the Open Pose similarity.')
@@ -293,8 +421,8 @@ if __name__ == "__main__":
         # since we have a per-pair custom distance function, we need to do it the old-fashioned way
         for idx_sign, sign_class in enumerate(sign_clusters_data):
 
-            # if idx_sign < 2:
-            #     continue
+            if idx_sign < 2:
+                continue
 
             print("Processing sign {}\n".format(sign_class))
             if sign_class not in sign_hand_clusters:
@@ -340,9 +468,14 @@ if __name__ == "__main__":
 
                 np.save("distances_{}.npy".format(sign_class), distance_matrix)
 
-            sign_hand_clusters[sign_class] = agglomerative_clustering(sign_clusters_data[sign_class], args.max_dist,
-                                                                      distance_matrix, f_hand_crops, f_joints,
-                                                                      args.visualize)
+            # sign_hand_clusters[sign_class] = agglomerative_clustering(sign_clusters_data[sign_class], args.max_dist,
+            #                                                           distance_matrix, f_hand_crops, f_joints,
+            #                                                           args.visualize)
+
+            sign_hand_clusters[sign_class] = agglomerative_clustering_mean(sign_clusters_data[sign_class],
+                                                                           args.max_dist,
+                                                                           distance_matrix, f_hand_crops, f_joints,
+                                                                           args.visualize)
 
             print("Number of clusters: {}".format(len(sign_hand_clusters[sign_class])))
 
