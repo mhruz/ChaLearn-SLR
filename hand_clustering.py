@@ -96,7 +96,7 @@ def fast_triu_indices(dim, k=0):
     return rows, cols
 
 
-def agglomerative_clustering(hand_samples, max_distance, distances, hand_crops, joints, save_images=False):
+def agglomerative_clustering(hand_samples, max_distance, distances, hand_crops, joints, visualize=False):
     clustering = {'hand_samples': hand_samples, 'clusters': []}
     clusters = []
     cluster_state = [[x] for x in range(len(hand_samples["samples"]))]
@@ -118,7 +118,7 @@ def agglomerative_clustering(hand_samples, max_distance, distances, hand_crops, 
 
         print(min_dist)
 
-        if min_dist > max_distance:
+        if min_dist > max_distance and visualize:
             if np.isinf(min_dist):
                 break
 
@@ -341,7 +341,8 @@ if __name__ == "__main__":
                 np.save("distances_{}.npy".format(sign_class), distance_matrix)
 
             sign_hand_clusters[sign_class] = agglomerative_clustering(sign_clusters_data[sign_class], args.max_dist,
-                                                                      distance_matrix, f_hand_crops, f_joints)
+                                                                      distance_matrix, f_hand_crops, f_joints,
+                                                                      args.visualize)
 
             print("Number of clusters: {}".format(len(sign_hand_clusters[sign_class])))
 
