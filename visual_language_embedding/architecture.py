@@ -3,7 +3,7 @@ import torch.nn.functional as F
 
 
 class VLE_01(nn.Module):
-    def __init__(self):
+    def __init__(self, num_clusters):
         super(VLE_01, self).__init__()
         self.conv1_1 = nn.Conv2d(3, 32, 3)
         self.conv1_2 = nn.Conv2d(32, 64, 3, padding=1)
@@ -18,6 +18,7 @@ class VLE_01(nn.Module):
         self.fc1 = nn.Linear(7 * 7 * 64, 512)
         self.fc2 = nn.Linear(512, 256)
         self.fc3 = nn.Linear(256, 64)
+        self.fc4 = nn.Linear(64, num_clusters)
 
     def forward(self, x):
         x = F.relu(self.conv1_1(x)) # 70 x 70 -> 68 x 68
