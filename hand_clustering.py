@@ -1,3 +1,5 @@
+import os
+
 import h5py
 import argparse
 import numpy as np
@@ -7,6 +9,14 @@ import pickle
 import concurrent.futures
 import cv2
 import copy
+
+
+def save_img(path, sample, frame, f_hand_crops):
+    img_idx = np.where(f_hand_crops["{}".format(sample)]["left_hand"]["frames"][:] == frame)
+    img = f_hand_crops["{}".format(sample)]["left_hand"]["images"][img_idx][0]
+    cv2.imwrite(path, img)
+
+    return True
 
 
 def compute_hand_pose_distance(hp_source, hp_target, metric_one=1):
@@ -504,9 +514,35 @@ if __name__ == "__main__":
                 cv2.waitKey()
                 cv2.destroyAllWindows()
 
+            if args.out_path is not None:
+                for cluster_idx, cluster in enumerate(sign_hand_clusters[sign_class]):
+
+                    future_to_args = {}
+                    os.makedirs(os.path.join(args.out_path, sign_class, str(cluster_idx)), exist_ok=True)
+
+                    for i, sample_idx in enumerate(cluster):
+                        sample_string = sample_strings[sample_idx]
+                        parts = sample_string.split("_")
+                        sample = "_".join(parts[:3])
+                        frame = int(parts[3])
+
+                        with concurrent.futures.ThreadPoolExecutor(max_workers=None) as executor:
+                            path = os.path.join(args.out_path, sign_class, str(cluster_idx),
+                                                "{}{}.jpg".format(sample, frame))
+                            future_to_args[executor.submit(save_img, path, sample, frame, f_hand_crops)] = path
+
+                    for future in concurrent.futures.as_completed(future_to_args):
+                        path = future_to_args[future]
+                        try:
+                            result = future.result()
+                        except Exception as exc:
+                            print("Saving image {} generated an exception: {}".format(path, exc))
+                        else:
+                            print("Image {} saved successfully.".format(path))
+
         print("Done")
 
-        pickle.dump(sign_hand_clusters, open("sign_hand_clusters_v03_04.p", "wb"))
+        pickle.dump(sign_hand_clusters, open("sign_hand_clusters_v03_05.p", "wb"))
 
     # # cluster the sub-clusters
     # super_clusters = []
