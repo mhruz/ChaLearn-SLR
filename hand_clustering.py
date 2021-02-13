@@ -381,9 +381,9 @@ if __name__ == "__main__":
     parser.add_argument('open_pose_h5', type=str, help='path to H5 with detected joint locations')
     parser.add_argument('sign_clusters_h5', type=str, help='h5 with hand clusters by signs')
     parser.add_argument('--hand_crops', type=str, help='optional h5 with cropped images of hands')
+    parser.add_argument('--distances_path', type=str, help='optional npy with pre-computed per-sign distances')
     parser.add_argument('--out_path', type=str, help='output path for cluster images', default="hand_clusters")
     parser.add_argument('--visualize', type=bool, help='whether to visualize')
-    parser.add_argument('--threshold', type=float, help='threshold of hand pose estimation reliability', default=0.5)
     parser.add_argument('--acceptance', type=float, help='acceptance rate of hand-shapes to be the same', default=0.0)
     parser.add_argument('--max_dist', type=float, help='distance threshold to accept as the same shape', default=1.0)
     parser.add_argument('--joints_to_mem', type=bool, help='read joints data to memory')
@@ -431,17 +431,14 @@ if __name__ == "__main__":
         # since we have a per-pair custom distance function, we need to do it the old-fashioned way
         for idx_sign, sign_class in enumerate(sign_clusters_data):
 
-            if idx_sign < 2:
-                continue
-
             print("Processing sign {}\n".format(sign_class))
             if sign_class not in sign_hand_clusters:
-                sign_hand_clusters[sign_class] = []
+                sign_hand_clusters[sign_class] = {}
 
             sample_strings = []
 
             try:
-                distance_matrix = np.load("distances_{}.npy".format(sign_class))
+                distance_matrix = np.load(os.path.join(args.distances_path, "distances_{}.npy".format(sign_class)))
                 for i, sample_i in enumerate(sign_clusters_data[sign_class]["samples"]):
                     sample_strings.append(
                         "{}_{}".format(sample_i.decode("utf-8"), sign_clusters_data[sign_class]["frames"][i]))
@@ -476,16 +473,18 @@ if __name__ == "__main__":
                 end = time.time()
                 print("Distance computation for {} elements: {} s".format(number_of_samples, end - start))
 
-                np.save("distances_{}.npy".format(sign_class), distance_matrix)
+                np.save(os.path.join(args.distances_path, "distances_{}.npy".format(sign_class)), distance_matrix)
 
             # sign_hand_clusters[sign_class] = agglomerative_clustering(sign_clusters_data[sign_class], args.max_dist,
             #                                                           distance_matrix, f_hand_crops, f_joints,
             #                                                           args.visualize)
 
-            sign_hand_clusters[sign_class] = agglomerative_clustering_mean(sign_clusters_data[sign_class],
+            sign_hand_clusters[sign_class]["clusters"] = agglomerative_clustering_mean(sign_clusters_data[sign_class],
                                                                            args.max_dist,
                                                                            distance_matrix, f_hand_crops, f_joints,
                                                                            args.visualize)
+
+            sign_hand_clusters[sign_class]["samples"] = sign_clusters_data[sign_class]
 
             print("Number of clusters: {}".format(len(sign_hand_clusters[sign_class])))
 
@@ -546,7 +545,20 @@ if __name__ == "__main__":
 
     # # cluster the sub-clusters
     # super_clusters = []
-    # for i, cluster in enumerate(sign_hand_clusters):
-    #     # create the 1st super cluster
-    #     if i == 0:
-    #         super_clusters.append(cluster)
+    # # compute a representative sample for each cluster
+    # for i, sign_class in enumerate(sign_hand_clusters):
+    #     distances = np.load(os.path.join(args.distances_path, "distances_{}.npy".format(sign_class)))
+    #     for cluster in sign_hand_clusters[sign_class]:
+    #         for idx_1, sample_1 in enumerate(cluster):
+    #                 for idx_2, sample_2 in enumerate(cluster):
+    #                     if idx_1["idx"] == idx_2["idx"]:
+    #                         continue
+    #
+    #                     a = min(idx_1["idx"], idx_2["idx"])
+    #                     b = max(idx_1["idx"], idx_2["idx"])
+    #                     sum_dist[i] += orig_distances[a, b]
+    #
+    #             representatives[min_i] = clusters[min_i][np.argmin(sum_dist)]["idx"]
+
+
+
