@@ -408,19 +408,17 @@ if __name__ == "__main__":
             joints_data = f_joints
 
         # read sign clusters into memory
-        if args.sign_clusters_to_mem is not None:
-            sign_clusters_data = {}
-            for sign_class in f_sign_clusters:
-                sign_clusters_data[sign_class] = {}
-                sign_clusters_data[sign_class]["samples"] = f_sign_clusters[sign_class]["samples"][:]
-                sign_clusters_data[sign_class]["frames"] = f_sign_clusters[sign_class]["frames"][:]
-                sign_clusters_data[sign_class]["seeders"] = {}
-                sign_clusters_data[sign_class]["seeders"]["samples"] = f_sign_clusters[sign_class]["seeders"][
-                                                                           "samples"][:]
-                sign_clusters_data[sign_class]["seeders"]["frames"] = f_sign_clusters[sign_class]["seeders"]["frames"][
+        sign_clusters_data = {}
+        for sign_class in f_sign_clusters:
+            sign_clusters_data[sign_class] = {}
+            sign_clusters_data[sign_class]["samples"] = f_sign_clusters[sign_class]["samples"][:]
+            sign_clusters_data[sign_class]["frames"] = f_sign_clusters[sign_class]["frames"][:]
+            sign_clusters_data[sign_class]["seeders"] = {}
+            sign_clusters_data[sign_class]["seeders"]["samples"] = f_sign_clusters[sign_class]["seeders"][
+                                                                       "samples"][:]
+            sign_clusters_data[sign_class]["seeders"]["frames"] = f_sign_clusters[sign_class]["seeders"]["frames"][
                                                                       :]
-        else:
-            sign_clusters_data = f_sign_clusters
+
 
         f_hand_crops = None
         if args.hand_crops is not None:
@@ -491,7 +489,7 @@ if __name__ == "__main__":
             print("Number of clusters: {}".format(len(sign_hand_clusters[sign_class])))
 
             if args.visualize is not None:
-                for cluster_idx, cluster in enumerate(sign_hand_clusters[sign_class]):
+                for cluster_idx, cluster in enumerate(sign_hand_clusters[sign_class]["clusters"]):
                     for i, sample_idx in enumerate(cluster):
                         sample_string = sample_strings[sample_idx]
                         parts = sample_string.split("_")
