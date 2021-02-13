@@ -381,8 +381,9 @@ if __name__ == "__main__":
     parser.add_argument('open_pose_h5', type=str, help='path to H5 with detected joint locations')
     parser.add_argument('sign_clusters_h5', type=str, help='h5 with hand clusters by signs')
     parser.add_argument('--hand_crops', type=str, help='optional h5 with cropped images of hands')
-    parser.add_argument('--distances_path', type=str, help='optional npy with pre-computed per-sign distances')
-    parser.add_argument('--out_path', type=str, help='output path for cluster images', default="hand_clusters")
+    parser.add_argument('--distances_path', type=str, help='optional npy with pre-computed per-sign distances',
+                        default='.')
+    parser.add_argument('--out_path', type=str, help='output path for cluster images')
     parser.add_argument('--visualize', type=bool, help='whether to visualize')
     parser.add_argument('--acceptance', type=float, help='acceptance rate of hand-shapes to be the same', default=0.0)
     parser.add_argument('--max_dist', type=float, help='distance threshold to accept as the same shape', default=1.0)
@@ -480,9 +481,10 @@ if __name__ == "__main__":
             #                                                           args.visualize)
 
             sign_hand_clusters[sign_class]["clusters"] = agglomerative_clustering_mean(sign_clusters_data[sign_class],
-                                                                           args.max_dist,
-                                                                           distance_matrix, f_hand_crops, f_joints,
-                                                                           args.visualize)
+                                                                                       args.max_dist,
+                                                                                       distance_matrix, f_hand_crops,
+                                                                                       f_joints,
+                                                                                       args.visualize)
 
             sign_hand_clusters[sign_class]["samples"] = sign_clusters_data[sign_class]
 
@@ -514,7 +516,7 @@ if __name__ == "__main__":
                 cv2.destroyAllWindows()
 
             if args.out_path is not None:
-                for cluster_idx, cluster in enumerate(sign_hand_clusters[sign_class]):
+                for cluster_idx, cluster in enumerate(sign_hand_clusters[sign_class]["clusters"]):
 
                     future_to_args = {}
                     os.makedirs(os.path.join(args.out_path, sign_class, str(cluster_idx)), exist_ok=True)
@@ -559,6 +561,3 @@ if __name__ == "__main__":
     #                     sum_dist[i] += orig_distances[a, b]
     #
     #             representatives[min_i] = clusters[min_i][np.argmin(sum_dist)]["idx"]
-
-
-
