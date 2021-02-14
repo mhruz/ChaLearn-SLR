@@ -1,5 +1,5 @@
 import os
-
+import sys
 import h5py
 import argparse
 import numpy as np
@@ -106,7 +106,7 @@ def fast_triu_indices(dim, k=0):
     return rows, cols
 
 
-def agglomerative_clustering(hand_samples, max_distance, distances, hand_crops, joints, visualize=False):
+def agglomerative_clustering(hand_samples, max_distance, distances, hand_crops=None, joints=None, visualize=False):
     clustering = {'hand_samples': hand_samples, 'clusters': []}
     clusters = []
     cluster_state = [[x] for x in range(len(hand_samples["samples"]))]
@@ -383,49 +383,48 @@ if __name__ == "__main__":
     parser.add_argument('--hand_crops', type=str, help='optional h5 with cropped images of hands')
     parser.add_argument('--distances_path', type=str, help='optional npy with pre-computed per-sign distances',
                         default='.')
-    parser.add_argument('--out_path', type=str, help='output path for cluster images')
+    parser.add_argument('--out_path', type=str, help='output path for sign cluster images')
+    parser.add_argument('--hands_out_path', type=str, help='output path for the final cluster images')
     parser.add_argument('--visualize', type=bool, help='whether to visualize')
     parser.add_argument('--acceptance', type=float, help='acceptance rate of hand-shapes to be the same', default=0.0)
     parser.add_argument('--max_dist', type=float, help='distance threshold to accept as the same shape', default=1.0)
     parser.add_argument('--joints_to_mem', type=bool, help='read joints data to memory')
     parser.add_argument('--sign_clusters_to_mem', type=bool, help='read sign cluster data to memory')
     parser.add_argument('--sign_clusters_pickle', type=str, help='if provided, the clustering will be loaded from this')
-    parser.add_argument('out_h5', type=str, help='output h5 dataset')
+    parser.add_argument('out', type=str, help='output pickle')
     args = parser.parse_args()
 
-    if args.sign_clusters_pickle is not None:
-        sign_hand_clusters = pickle.load(open(args.sign_clusters_pickle, "rb"))
-    else:
-        f_sign_clusters = h5py.File(args.sign_clusters_h5, "r")
-        f_joints = h5py.File(args.open_pose_h5)
-
-        # read joints into memory
-        if args.joints_to_mem is not None:
-            joints_data = {}
-            for video_fn in f_joints:
-                joints_data[video_fn] = f_joints[video_fn][:]
-        else:
-            joints_data = f_joints
-
-        # read sign clusters into memory
+    # read sign clusters into memory
+    f_sign_clusters = h5py.File(args.sign_clusters_h5, "r")
+    if args.sign_clusters_pickle is None:
         sign_clusters_data = {}
         for sign_class in f_sign_clusters:
             sign_clusters_data[sign_class] = {}
             sign_clusters_data[sign_class]["samples"] = f_sign_clusters[sign_class]["samples"][:]
             sign_clusters_data[sign_class]["frames"] = f_sign_clusters[sign_class]["frames"][:]
             sign_clusters_data[sign_class]["seeders"] = {}
-            sign_clusters_data[sign_class]["seeders"]["samples"] = f_sign_clusters[sign_class]["seeders"][
-                                                                       "samples"][:]
-            sign_clusters_data[sign_class]["seeders"]["frames"] = f_sign_clusters[sign_class]["seeders"]["frames"][
-                                                                      :]
+            sign_clusters_data[sign_class]["seeders"]["samples"] = f_sign_clusters[sign_class]["seeders"]["samples"][:]
+            sign_clusters_data[sign_class]["seeders"]["frames"] = f_sign_clusters[sign_class]["seeders"]["frames"][:]
+    else:
+        sign_clusters_data = f_sign_clusters
 
+    # read joints into memory
+    f_joints = h5py.File(args.open_pose_h5)
+    if args.joints_to_mem is not None:
+        joints_data = {}
+        for video_fn in f_joints:
+            joints_data[video_fn] = f_joints[video_fn][:]
+    else:
+        joints_data = f_joints
 
+    if args.sign_clusters_pickle is not None:
+        sign_hand_clusters = pickle.load(open(args.sign_clusters_pickle, "rb"))
+    else:
         f_hand_crops = None
         if args.hand_crops is not None:
             f_hand_crops = h5py.File(args.hand_crops, "r")
 
         sign_hand_clusters = {}
-
         # compute distances of hand-shapes in one sign to create sub-clusters of sign hand-shapes
         # since we have a per-pair custom distance function, we need to do it the old-fashioned way
         for idx_sign, sign_class in enumerate(sign_clusters_data):
@@ -543,19 +542,109 @@ if __name__ == "__main__":
 
         pickle.dump(sign_hand_clusters, open("sign_hand_clusters_v03_05.p", "wb"))
 
-    # # cluster the sub-clusters
-    # super_clusters = []
-    # # compute a representative sample for each cluster
-    # for i, sign_class in enumerate(sign_hand_clusters):
-    #     distances = np.load(os.path.join(args.distances_path, "distances_{}.npy".format(sign_class)))
-    #     for cluster in sign_hand_clusters[sign_class]:
-    #         for idx_1, sample_1 in enumerate(cluster):
-    #                 for idx_2, sample_2 in enumerate(cluster):
-    #                     if idx_1["idx"] == idx_2["idx"]:
-    #                         continue
-    #
-    #                     a = min(idx_1["idx"], idx_2["idx"])
-    #                     b = max(idx_1["idx"], idx_2["idx"])
-    #                     sum_dist[i] += orig_distances[a, b]
-    #
-    #             representatives[min_i] = clusters[min_i][np.argmin(sum_dist)]["idx"]
+    # cluster the sub-clusters
+    super_clusters = []
+    representatives = {}
+    index_to_representative = []
+    representatives_list = []
+    number_of_representatives = 0
+    hand_samples = {"samples": [], "frames": []}
+    # compute a representative sample for each cluster
+    for i, sign_class in enumerate(sign_hand_clusters):
+        representatives[sign_class] = {}
+        distances = np.load(os.path.join(args.distances_path, "distances_{}.npy".format(sign_class)))
+        for idx_cluster, cluster in enumerate(sign_hand_clusters[sign_class]["clusters"]):
+            # skip small clusters
+            if len(cluster) < 10:
+                continue
+
+            sum_dist = np.zeros(len(cluster))
+            for idx_1, sample_1 in enumerate(cluster):
+                sample_2_idx = cluster
+                indexes = np.array(np.vstack([np.repeat(sample_1, len(cluster)), sample_2_idx]))
+                indexes = np.sort(indexes, axis=0).T
+
+                sum_dist[idx_1] = np.sum(distances[indexes[:, 0], indexes[:, 1]])
+
+            number_of_representatives += 1
+            representatives[sign_class][idx_cluster] = cluster[np.argmin(sum_dist)]
+            representatives_list.append(representatives[sign_class][idx_cluster])
+            index_to_representative.append({"sign_class": sign_class, "cluster": idx_cluster})
+            hand_samples["samples"].append(
+                sign_clusters_data[sign_class]["samples"][representatives[sign_class][idx_cluster]])
+            hand_samples["frames"].append(
+                sign_clusters_data[sign_class]["frames"][representatives[sign_class][idx_cluster]])
+
+    # compute the distances between representatives
+    subcluster_distances = np.zeros((number_of_representatives, number_of_representatives))
+    index_to_cluster = []
+    for i, sample_i in enumerate(representatives_list):
+
+        sign_class_i = index_to_representative[i]["sign_class"]
+        cluster_i = index_to_representative[i]["cluster"]
+
+        sample_i_filename = sign_clusters_data[sign_class_i]["samples"][sample_i].decode("utf-8")
+        sample_i_frame = sign_clusters_data[sign_class_i]["frames"][sample_i]
+        sample_i_joints = joints_data[sample_i_filename][sample_i_frame]
+
+        joints = np.reshape(sample_i_joints, (-1, 3))
+        hp1 = joints[8:29][:, :2]
+        shoulder_length = np.linalg.norm(joints[1, :2] - joints[2, :2]).item()
+
+        for j, sample_j in enumerate(representatives_list):
+            if j <= i:
+                continue
+
+            sign_class_j = index_to_representative[j]["sign_class"]
+            cluster_j = index_to_representative[j]["cluster"]
+
+            sample_j_filename = sign_clusters_data[sign_class_j]["samples"][sample_j].decode("utf-8")
+            sample_j_frame = sign_clusters_data[sign_class_j]["frames"][sample_j]
+            sample_j_joints = joints_data[sample_j_filename][sample_j_frame]
+
+            hp2 = np.reshape(sample_j_joints, (-1, 3))
+            hp2 = hp2[8:29][:, :2]
+
+            dist = compute_hand_pose_distance_weighted(hp2, hp1, shoulder_length)
+            subcluster_distances[i, j] = dist
+
+            index_to_cluster.append({"cluster_1_sign": sign_class_i, "cluster_1_subcluster": cluster_i,
+                                     "cluster_2_sign": sign_class_j, "cluster_2_subcluster": cluster_j})
+
+    final_clusters = agglomerative_clustering(hand_samples, 0.5, subcluster_distances)
+
+    output = {"hand_clusters": final_clusters, "index_to_representative": index_to_representative,
+              "hand_samples": hand_samples, "sign_hand_clusters": sign_hand_clusters}
+
+    pickle.dump(output, open(args.out, "wb"))
+
+    if args.hands_out_path is not None:
+        if args.hand_crops is not None:
+            f_hand_crops = h5py.File(args.hand_crops, "r")
+        else:
+            print("When saving images of the final clusters, the hand crops must be provided!")
+            sys.exit()
+
+        for i, hand_cluster in enumerate(final_clusters):
+            future_to_args = {}
+            os.makedirs(os.path.join(args.hands_out_path, str(i)), exist_ok=True)
+            for hand_repre in hand_cluster:
+                cluster_info = index_to_representative[hand_repre]
+                sign_class = cluster_info["sign"]
+                for hand in sign_hand_clusters[cluster_info["sign"]]["clusters"][cluster_info["cluster"]]:
+                    sample = hand_samples["samples"][hand]
+                    frame = hand_samples["frames"][hand]
+
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=None) as executor:
+                        path = os.path.join(args.hands_out_path, str(i),
+                                            "{}{}.jpg".format(sample, frame))
+                        future_to_args[executor.submit(save_img, path, sample, frame, f_hand_crops)] = path
+
+            for future in concurrent.futures.as_completed(future_to_args):
+                path = future_to_args[future]
+                try:
+                    result = future.result()
+                except Exception as exc:
+                    print("Saving image {} generated an exception: {}".format(path, exc))
+                else:
+                    print("Image {} saved successfully.".format(path))
