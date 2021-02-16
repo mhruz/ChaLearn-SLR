@@ -15,11 +15,12 @@ if __name__ == "__main__":
     data = pickle.load(open(args.hand_clusters, "rb"))
     f_hand_crops = h5py.File(args.hand_crops, "r")
 
-    f_out = h5py.File(args.output, "w")
-    f_out.create_dataset("train_images", (100, 70, 70, 3), maxshape=(None, 70, 70, 3), dtype=np.uint8)
-    f_out.create_dataset("val_images", (100, 70, 70, 3), maxshape=(None, 70, 70, 3), dtype=np.uint8)
-    f_out.create_dataset("train_labels", (100, 1), maxshape=(None, 1), dtype=np.int)
-    f_out.create_dataset("val_labels", (100, 1), maxshape=(None, 1), dtype=np.int)
+    f_train_out = h5py.File(args.train_set, "w")
+    f_train_out.create_dataset("images", (100, 70, 70, 3), maxshape=(None, 70, 70, 3), dtype=np.uint8)
+    f_train_out.create_dataset("labels", (100, 1), maxshape=(None, 1), dtype=np.int)
+    f_val_out = h5py.File(args.val_set, "w")
+    f_val_out.create_dataset("images", (100, 70, 70, 3), maxshape=(None, 70, 70, 3), dtype=np.uint8)
+    f_val_out.create_dataset("labels", (100, 1), maxshape=(None, 1), dtype=np.int)
 
     final_clusters = data["hand_clusters"]
     index_to_representative = data["index_to_representative"]
@@ -42,28 +43,29 @@ if __name__ == "__main__":
                 img = f_hand_crops["{}".format(sample)]["left_hand"]["images"][img_idx][0]
 
                 if any(s in sample for s in val_signers):
-                    f_out["val_images"][val_data_len, :, :, :] = img
-                    f_out["val_labels"][val_data_len] = i
+                    f_val_out["images"][val_data_len, :, :, :] = img
+                    f_val_out["labels"][val_data_len] = i
 
                     val_data_len += 1
 
-                    if val_data_len == len(f_out["val_labels"]):
-                        f_out["val_images"].resize((val_data_len + 100, 70, 70, 3))
-                        f_out["val_labels"].resize((val_data_len + 100, 1))
+                    if val_data_len == len(f_val_out["val_labels"]):
+                        f_val_out["images"].resize((val_data_len + 100, 70, 70, 3))
+                        f_val_out["labels"].resize((val_data_len + 100, 1))
                 else:
-                    f_out["train_images"][train_data_len, :, :, :] = img
-                    f_out["train_labels"][train_data_len] = i
+                    f_train_out["images"][train_data_len, :, :, :] = img
+                    f_train_out["labels"][train_data_len] = i
 
                     train_data_len += 1
 
-                    if train_data_len == len(f_out["labels"]):
-                        f_out["train_images"].resize((train_data_len + 100, 70, 70, 3))
-                        f_out["train_labels"].resize((train_data_len + 100, 1))
+                    if train_data_len == len(f_train_out["labels"]):
+                        f_train_out["images"].resize((train_data_len + 100, 70, 70, 3))
+                        f_train_out["labels"].resize((train_data_len + 100, 1))
 
     # truncate to actual length
-    f_out["train_images"].resize(train_data_len, 70, 70, 3)
-    f_out["train_labels"].resize(train_data_len, 1)
-    f_out["val_images"].resize(val_data_len, 70, 70, 3)
-    f_out["val_labels"].resize(val_data_len, 1)
+    f_train_out["images"].resize(train_data_len, 70, 70, 3)
+    f_train_out["labels"].resize(train_data_len, 1)
+    f_val_out["images"].resize(val_data_len, 70, 70, 3)
+    f_val_out["labels"].resize(val_data_len, 1)
 
-    f_out.close()
+    f_train_out.close()
+    f_val_out.close()
