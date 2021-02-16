@@ -31,6 +31,7 @@ if __name__ == "__main__":
     val_data_len = 0
     val_signers = ["signer40", "signer42"]
     for i, hand_cluster in enumerate(final_clusters):
+        print("Processing cluster {}/{}".format(i+1, len(final_clusters)))
         for hand_repre in hand_cluster:
             cluster_info = index_to_representative[hand_repre]
             sign_class = cluster_info["sign_class"]
@@ -48,7 +49,7 @@ if __name__ == "__main__":
 
                     val_data_len += 1
 
-                    if val_data_len == len(f_val_out["val_labels"]):
+                    if val_data_len == len(f_val_out["labels"]):
                         f_val_out["images"].resize((val_data_len + 100, 70, 70, 3))
                         f_val_out["labels"].resize((val_data_len + 100, 1))
                 else:
