@@ -17,8 +17,8 @@ class VLE_01(nn.Module):
 
         self.fc1 = nn.Linear(7 * 7 * 64, 512)
         self.fc2 = nn.Linear(512, 256)
-        self.fc3 = nn.Linear(256, 64)
-        self.fc4 = nn.Linear(64, num_clusters)
+        self.fc3 = nn.Linear(256, 128)
+        self.fc4 = nn.Linear(128, num_clusters)
 
     def forward(self, x):
         x = F.relu(self.conv1_1(x)) # 70 x 70 -> 68 x 68

@@ -618,6 +618,12 @@ if __name__ == "__main__":
 
     pickle.dump(output, open(args.out, "wb"))
 
+    # data = pickle.load(open("hand_clusters_v03_05.p", "rb"))
+    # final_clusters = data["hand_clusters"]
+    # index_to_representative = data["index_to_representative"]
+    # hand_samples = data["hand_samples"]
+    # sign_hand_clusters = data["sign_hand_clusters"]
+
     if args.hands_out_path is not None:
         if args.hand_crops is not None:
             f_hand_crops = h5py.File(args.hand_crops, "r")
@@ -630,14 +636,15 @@ if __name__ == "__main__":
             os.makedirs(os.path.join(args.hands_out_path, str(i)), exist_ok=True)
             for hand_repre in hand_cluster:
                 cluster_info = index_to_representative[hand_repre]
-                sign_class = cluster_info["sign"]
-                for hand in sign_hand_clusters[cluster_info["sign"]]["clusters"][cluster_info["cluster"]]:
-                    sample = hand_samples["samples"][hand]
-                    frame = hand_samples["frames"][hand]
+                sign_class = cluster_info["sign_class"]
+                with concurrent.futures.ThreadPoolExecutor(max_workers=None) as executor:
+                    for hand in sign_hand_clusters[sign_class]["clusters"][cluster_info["cluster"]]:
+                        sample = sign_hand_clusters[sign_class]["samples"]["samples"][hand].decode("utf-8")
+                        frame = sign_hand_clusters[sign_class]["samples"]["frames"][hand]
 
-                    with concurrent.futures.ThreadPoolExecutor(max_workers=None) as executor:
                         path = os.path.join(args.hands_out_path, str(i),
                                             "{}{}.jpg".format(sample, frame))
+
                         future_to_args[executor.submit(save_img, path, sample, frame, f_hand_crops)] = path
 
             for future in concurrent.futures.as_completed(future_to_args):

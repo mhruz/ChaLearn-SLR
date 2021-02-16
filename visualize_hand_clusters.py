@@ -14,11 +14,12 @@ if __name__ == "__main__":
     parser.add_argument('out_path', type=str, help='output path to save the images')
     args = parser.parse_args()
 
-    clusters = pickle.load(open(args.sign_clusters_h5, "rb"))
+    clusters = pickle.load(open(args.sign_clusters_pickle, "rb"))
     hand_crops = h5py.File(args.hand_crops, "r")
 
     for i, cluster in enumerate(clusters):
-        cluster_path = os.path.join(args.sout_path, "{:03d}".format(i))
+        print("Processing cluster {}".format(i))
+        cluster_path = os.path.join(args.out_path, "{:03d}".format(i))
         os.makedirs(cluster_path, exist_ok=True)
         for hand_string in cluster:
             parts = hand_string.split("_")
