@@ -63,10 +63,10 @@ if __name__ == "__main__":
                         f_train_out["labels"].resize((train_data_len + 100, 1))
 
     # truncate to actual length
-    f_train_out["images"].resize(train_data_len, 70, 70, 3)
-    f_train_out["labels"].resize(train_data_len, 1)
-    f_val_out["images"].resize(val_data_len, 70, 70, 3)
-    f_val_out["labels"].resize(val_data_len, 1)
+    f_train_out["images"].resize((train_data_len, 70, 70, 3))
+    f_train_out["labels"].resize((train_data_len, 1))
+    f_val_out["images"].resize((val_data_len, 70, 70, 3))
+    f_val_out["labels"].resize((val_data_len, 1))
 
     f_train_out.close()
     f_val_out.close()
