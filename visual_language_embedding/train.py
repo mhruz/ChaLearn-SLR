@@ -46,9 +46,13 @@ if __name__ == "__main__":
 
     for epoch in range(args.max_epoch):  # loop over the dataset multiple times
 
+        batch_num = 0
         running_loss = 0.0
         net.train()
+
         for idx in range(0, num_samples, batch_size):
+            batch_num += 1
+
             input_data = []
             input_labels = []
             for data_idx in range(idx, min(idx + batch_size, num_samples)):
@@ -71,7 +75,7 @@ if __name__ == "__main__":
 
             # print statistics
             running_loss += loss.item()
-            if idx % (10 * batch_size) == 9:
+            if batch_num % 10 == 9:
                 print('[%d, %5d] loss: %.3f' %
                       (epoch + 1, idx + 1, running_loss / 10))
                 running_loss = 0.0
