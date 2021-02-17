@@ -1,0 +1,5 @@
+opencv-python==4.5.1.48
+imutils==0.5.4
+dlib==19.21.1
+mediapipe==0.8.2
+torch==1.7.1
