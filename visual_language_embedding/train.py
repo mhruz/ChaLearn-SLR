@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch
 import random
 import os
+from architecture import VLE_01
 
 
 if __name__ == "__main__":
@@ -36,9 +37,10 @@ if __name__ == "__main__":
 
     batch_size = args.batch_size
 
-    net = models.resnet18()
-    # replace classification layer
-    net.fc = nn.Linear(512, 65)
+    # net = models.resnet18()
+    # # replace classification layer
+    # net.fc = nn.Linear(512, 65)
+    net = VLE_01(65)
     net.cuda()
 
     criterion = nn.CrossEntropyLoss()
