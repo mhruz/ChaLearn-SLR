@@ -48,6 +48,7 @@ if __name__ == "__main__":
 
         batch_num = 0
         running_loss = 0.0
+        running_acc = 0.0
         net.train()
 
         for idx in range(0, num_samples, batch_size):
@@ -69,6 +70,9 @@ if __name__ == "__main__":
 
             # forward + backward + optimize
             outputs = net(inputs)
+
+            running_acc += (torch.argmax(outputs, dim=1) == labels).sum().item()
+
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
@@ -76,9 +80,10 @@ if __name__ == "__main__":
             # print statistics
             running_loss += loss.item()
             if batch_num % 10 == 9:
-                print('[%d, %5d] loss: %.3f' %
-                      (epoch + 1, idx + 1, running_loss / 10))
+                print('[%d, %5d] loss: %.3f, acc: %.3f' %
+                      (epoch + 1, idx + 1, running_loss / 10, running_acc / 10))
                 running_loss = 0.0
+                running_acc = 0.0
 
         # compute validation loss
         net.eval()
