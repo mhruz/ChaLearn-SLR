@@ -42,7 +42,7 @@ if __name__ == "__main__":
     net.cuda()
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.9)
+    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
     for epoch in range(args.max_epoch):  # loop over the dataset multiple times
 
@@ -71,7 +71,7 @@ if __name__ == "__main__":
             # forward + backward + optimize
             outputs = net(inputs)
 
-            running_acc += (torch.argmax(outputs, dim=1) == labels).sum().item() / len(labels)
+            running_acc += (torch.argmax(outputs, dim=1) == labels).sum().item() / labels.shape[0]
 
             loss = criterion(outputs, labels)
             loss.backward()
@@ -104,7 +104,7 @@ if __name__ == "__main__":
             num_batches += 1
 
         print("Validation loss Epoch {}/{} = {}".format(epoch, args.max_epoch, val_loss / num_val_samples))
-        print("Validation acc Epoch {}/{} = {}".format(epoch, args.max_epoch, acc / num_batches))
+        print("Validation acc Epoch {}/{} = {}".format(epoch, args.max_epoch, acc / num_val_samples))
 
         # save the model
         if (epoch + 1) % args.save_epoch == 0:
