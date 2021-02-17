@@ -4,6 +4,8 @@ import torchvision.models as models
 import torch.optim as optim
 import torch.nn as nn
 import torch
+import random
+
 
 if __name__ == "__main__":
     # parse commandline
@@ -27,9 +29,16 @@ if __name__ == "__main__":
     num_samples = len(data["labels"])
     num_val_samples = len(val_data["labels"])
 
+    indexes = list(range(num_samples))
+    random.shuffle(indexes)
+
     batch_size = args.batch_size
 
-    net = models.resnet18().to("cuda:0")
+    net = models.resnet18()
+    # replace classification layer
+    net.fc = nn.Linear(512, 65)
+    net.cuda()
+
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
@@ -38,10 +47,16 @@ if __name__ == "__main__":
         running_loss = 0.0
         net.train()
         for idx in range(0, num_samples, batch_size):
-            idx_max = min(idx + batch_size, num_samples)
-            data_samples = data["images"][idx:idx_max].swapaxes(3, 1) / 255.0
-            inputs = torch.tensor(data_samples, dtype=torch.float, device="cuda:0")
-            labels = torch.tensor(data["labels"][idx:idx_max, 0], dtype=torch.long, device="cuda:0")
+            input_data = []
+            input_labels = []
+            for data_idx in range(min(idx + batch_size, num_samples)):
+                data_sample = data["images"][indexes[data_idx]].swapaxes(2, 0) / 255.0
+                label = data["labels"][indexes[data_idx], 0]
+                input_data.append(data_sample)
+                input_labels.append(label)
+
+            inputs = torch.tensor(input_data, dtype=torch.float, device="cuda:0")
+            labels = torch.tensor(input_labels, dtype=torch.long, device="cuda:0")
 
             # zero the parameter gradients
             optimizer.zero_grad()
