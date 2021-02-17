@@ -5,6 +5,7 @@ import torch.optim as optim
 import torch.nn as nn
 import torch
 import random
+import os
 
 
 if __name__ == "__main__":
@@ -15,6 +16,7 @@ if __name__ == "__main__":
     parser.add_argument('--max_epoch', type=int, help='number of max epochs', default=10)
     parser.add_argument('--batch_size', type=int, help='number data in one batch', default=32)
     parser.add_argument('--data_to_mem', type=bool, help='load data to memory')
+    parser.add_argument('--save_epoch', type=int, help='after how many epoch to save the model', default=1)
     parser.add_argument('output', type=str, help='path to output network')
     args = parser.parse_args()
 
@@ -90,6 +92,16 @@ if __name__ == "__main__":
             val_loss += loss.item()
             num_batches += 1
 
-        print("Validation loss Epoch {}/{} = {}".format(epoch, args.max_epoch, val_loss/num_batches))
+        print("Validation loss Epoch {}/{} = {}".format(epoch, args.max_epoch, val_loss / num_batches))
+
+        # save the model
+        if (epoch + 1) % args.save_epoch == 0:
+            torch.save({
+                'epoch': epoch,
+                'model_state_dict': net.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'loss': val_loss / num_batches,
+            }, os.path.join(args.output) + "epoch_{}.tar".format(epoch))
 
     print('Finished Training')
+    torch.save(net.state_dict(), args.output)
