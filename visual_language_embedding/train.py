@@ -84,7 +84,7 @@ if __name__ == "__main__":
             idx_max = min(idx + batch_size, num_val_samples)
             data_samples = val_data["images"][idx:idx_max].swapaxes(3, 1) / 255.0
             inputs = torch.tensor(data_samples, dtype=torch.float, device="cuda:0")
-            labels = torch.tensor(val_data["labels"][idx:idx_max, 0], device="cuda:0")
+            labels = torch.tensor(val_data["labels"][idx:idx_max, 0], dtype=torch.long, device="cuda:0")
 
             outputs = net(inputs)
             loss = criterion(outputs, labels)
