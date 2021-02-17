@@ -103,7 +103,7 @@ if __name__ == "__main__":
             val_loss += loss.item()
             num_batches += 1
 
-        print("Validation loss Epoch {}/{} = {}".format(epoch, args.max_epoch, val_loss / num_val_samples))
+        print("Validation loss Epoch {}/{} = {}".format(epoch, args.max_epoch, val_loss / num_batches))
         print("Validation acc Epoch {}/{} = {}".format(epoch, args.max_epoch, acc / num_val_samples))
 
         # save the model
