@@ -42,7 +42,7 @@ if __name__ == "__main__":
     net.cuda()
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+    optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.9)
 
     for epoch in range(args.max_epoch):  # loop over the dataset multiple times
 
@@ -71,7 +71,7 @@ if __name__ == "__main__":
             # forward + backward + optimize
             outputs = net(inputs)
 
-            running_acc += (torch.argmax(outputs, dim=1) == labels).sum().item()
+            running_acc += (torch.argmax(outputs, dim=1) == labels).sum().item() / len(labels)
 
             loss = criterion(outputs, labels)
             loss.backward()
