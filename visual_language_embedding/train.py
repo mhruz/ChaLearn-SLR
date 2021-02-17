@@ -84,6 +84,7 @@ if __name__ == "__main__":
         net.eval()
         val_loss = 0
         num_batches = 0
+        acc = 0.0
         for idx in range(0, num_val_samples, batch_size):
             idx_max = min(idx + batch_size, num_val_samples)
             data_samples = val_data["images"][idx:idx_max].swapaxes(3, 1) / 255.0
@@ -93,10 +94,12 @@ if __name__ == "__main__":
             outputs = net(inputs)
             loss = criterion(outputs, labels)
 
+            acc += (torch.argmax(outputs, dim=1) == labels).sum().item()
             val_loss += loss.item()
             num_batches += 1
 
-        print("Validation loss Epoch {}/{} = {}".format(epoch, args.max_epoch, val_loss / num_batches))
+        print("Validation loss Epoch {}/{} = {}".format(epoch, args.max_epoch, val_loss / num_val_samples))
+        print("Validation acc Epoch {}/{} = {}".format(epoch, args.max_epoch, acc / num_batches))
 
         # save the model
         if (epoch + 1) % args.save_epoch == 0:
