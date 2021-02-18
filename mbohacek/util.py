@@ -1,8 +1,8 @@
 
 import torch
 
-from location_area_checks import *
-from config import *
+from mbohacek.location_area_checks import *
+from mbohacek.config import *
 
 
 def get_other_arm_to_hand_point(point: tuple, body_landmarks: list) -> str:

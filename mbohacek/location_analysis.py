@@ -1,8 +1,8 @@
 
 import cv2
 
-from pose_analysis import *
-from util import *
+from mbohacek.pose_analysis import *
+from mbohacek.util import *
 
 
 def analyze_hand_position(hands_data: list) -> (str, tuple):

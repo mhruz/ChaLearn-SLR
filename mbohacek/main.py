@@ -1,7 +1,7 @@
 
-from location_analysis import *
+from mbohacek.location_analysis import *
 
-img = cv2.imread("img/x12.jpg")
+img = cv2.imread("test_img.jpg")
 
 found_hands = analyze_hand_landmarks(img)[0]
 found_body = convert_mp_to_lim_op(analyze_body_landmarks(img)[0])
