@@ -160,13 +160,16 @@ def analyze_hands_areas(body_landmarks: list, hands: list, face_landmarks: list)
         overall_results = {}
         for key_point, value_score_dict in results.items():
             for key_area, value_score in value_score_dict.items():
+                if value_score == 0:
+                    value_score = 0.01
+
                 if key_area not in overall_results:
                     overall_results[key_area] = 0
 
                 overall_results[key_area] += value_score
 
         # If no areas were flagged, neutral_space is the fallback
-        if not overall_results:
+        if overall_results == {}:
             overall_results = {"neutral_space": 1}
 
         # Normalize the values to 1
