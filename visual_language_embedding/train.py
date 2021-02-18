@@ -7,6 +7,9 @@ import torch
 import random
 import os
 from architecture import VLE_01
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
+import cv2
 
 
 if __name__ == "__main__":
@@ -37,14 +40,41 @@ if __name__ == "__main__":
 
     batch_size = args.batch_size
 
-    # net = models.resnet18()
-    # # replace classification layer
-    # net.fc = nn.Linear(512, 65)
-    net = VLE_01(65)
+    net = models.resnet18()
+    # replace classification layer
+    net.fc = nn.Linear(512, 65)
+    # net = VLE_01(65)
     net.cuda()
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+
+    transform = A.Compose([
+        #A.Blur(blur_limit=3, p=0.5),
+        #A.CLAHE(tile_grid_size=(7, 7)),
+        A.ColorJitter(hue=0.05),
+        A.HorizontalFlip(),
+        A.GaussNoise(var_limit=(5, 15)),
+        A.GridDistortion(),
+        A.MotionBlur(),
+        A.RandomBrightnessContrast(brightness_limit=0.1, contrast_limit=0.1),
+        A.RGBShift(r_shift_limit=15, b_shift_limit=15, g_shift_limit=15),
+        A.RandomResizedCrop(70, 70, scale=(0.85, 1.0)),
+        A.Rotate(10),
+        ToTensorV2()
+    ])
+
+    # im = data["images"][5454]
+    # cv2.namedWindow("im", 2)
+    # cv2.namedWindow("im_aug", 2)
+    # cv2.imshow("im", im)
+    #
+    # for i in range(10):
+    #     im2 = transform(image=im)["image"]
+    #     cv2.imshow("im_aug", im2)
+    #     cv2.waitKey()
+    #
+    # cv2.destroyAllWindows()
 
     for epoch in range(args.max_epoch):  # loop over the dataset multiple times
 
@@ -60,6 +90,7 @@ if __name__ == "__main__":
             input_labels = []
             for data_idx in range(idx, min(idx + batch_size, num_samples)):
                 data_sample = data["images"][indexes[data_idx]].swapaxes(2, 0) / 255.0
+                data_sample = transform(data_sample)
                 label = data["labels"][indexes[data_idx], 0]
                 input_data.append(data_sample)
                 input_labels.append(label)
