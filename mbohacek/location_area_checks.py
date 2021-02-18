@@ -44,12 +44,12 @@ def is_in_area_above_head(point: tuple, body_landmarks: list, face_landmarks: li
     centered_point = (face_landmarks[27][0],
                       face_landmarks[27][1] - calculate_head_height_metric(body_landmarks) * 2)
 
-    contained = is_point_in_area(point, centered_point, (calculate_head_height_metric(body_landmarks) / 2,
-                                                         calculate_head_height_metric(body_landmarks)))
+    contained = is_point_in_area(point, centered_point, (calculate_head_height_metric(body_landmarks),
+                                                         calculate_head_height_metric(body_landmarks) * 2))
     distance = get_landmarks_euclidean_distance(point, centered_point)
 
-    return contained, 1 - distance / get_area_radius(centered_point, (calculate_head_height_metric(body_landmarks) / 2,
-                                                                      calculate_head_height_metric(body_landmarks)))
+    return contained, 1 - distance / get_area_radius(centered_point, (calculate_head_height_metric(body_landmarks),
+                                                                      calculate_head_height_metric(body_landmarks) * 2))
 
 
 def is_in_area_upper_face(point: tuple, body_landmarks: list, face_landmarks: list) -> (bool, float):
@@ -65,12 +65,12 @@ def is_in_area_upper_face(point: tuple, body_landmarks: list, face_landmarks: li
     centered_point = (face_landmarks[27][0],
                       face_landmarks[27][1] - calculate_head_height_metric(body_landmarks) / 2)
 
-    contained = is_point_in_area(point, centered_point, (calculate_head_height_metric(body_landmarks) / 2,
-                                                         calculate_head_height_metric(body_landmarks) / 4))
+    contained = is_point_in_area(point, centered_point, (calculate_head_height_metric(body_landmarks),
+                                                         calculate_head_height_metric(body_landmarks) / 2))
     distance = get_landmarks_euclidean_distance(point, centered_point)
 
-    return contained, 1 - distance / get_area_radius(centered_point, (calculate_head_height_metric(body_landmarks) / 2,
-                                                                      calculate_head_height_metric(body_landmarks) / 4))
+    return contained, 1 - distance / get_area_radius(centered_point, (calculate_head_height_metric(body_landmarks),
+                                                                      calculate_head_height_metric(body_landmarks) / 2))
 
 
 def is_in_area_eyes(point: tuple, body_landmarks: list, face_landmarks: list) -> (bool, float):
@@ -88,12 +88,12 @@ def is_in_area_eyes(point: tuple, body_landmarks: list, face_landmarks: list) ->
     else:
         closer_eye = face_landmarks[47]
 
-    contained = is_point_in_area(point, closer_eye, (calculate_head_height_metric(body_landmarks) * 0.4,
-                                                             calculate_head_height_metric(body_landmarks) * 0.24))
+    contained = is_point_in_area(point, closer_eye, (calculate_head_height_metric(body_landmarks) * 0.35,
+                                                             calculate_head_height_metric(body_landmarks) * 0.38))
     distance = get_landmarks_euclidean_distance(point, closer_eye)
 
     return contained, 1 - distance / get_area_radius(closer_eye, (
-        calculate_head_height_metric(body_landmarks) * 0.4, calculate_head_height_metric(body_landmarks) * 0.24))
+        calculate_head_height_metric(body_landmarks) * 0.35, calculate_head_height_metric(body_landmarks) * 0.38))
 
 
 def is_in_area_nose(point: tuple, body_landmarks: list, face_landmarks: list) -> (bool, float):
@@ -106,12 +106,12 @@ def is_in_area_nose(point: tuple, body_landmarks: list, face_landmarks: list) ->
     :return: Is the point in the designated area (bool), score for this particular area calculated from the distance to the center (float)
     """
 
-    contained = is_point_in_area(point, face_landmarks[29], (calculate_head_height_metric(body_landmarks) * 0.4,
-                                                             calculate_head_height_metric(body_landmarks) * 0.6))
+    contained = is_point_in_area(point, face_landmarks[29], (calculate_head_height_metric(body_landmarks) * 0.35,
+                                                             calculate_head_height_metric(body_landmarks) * 0.7))
     distance = get_landmarks_euclidean_distance(point, face_landmarks[29])
 
     return contained, 1 - distance / get_area_radius(face_landmarks[29], (
-        calculate_head_height_metric(body_landmarks) * 0.4, calculate_head_height_metric(body_landmarks) * 0.6))
+        calculate_head_height_metric(body_landmarks) * 0.35, calculate_head_height_metric(body_landmarks) * 0.7))
 
 
 def is_in_area_mouth(point: tuple, body_landmarks: list, face_landmarks: list) -> (bool, float):
@@ -142,12 +142,12 @@ def is_in_area_lower_face(point: tuple, body_landmarks: list, face_landmarks: li
     :return: Is the point in the designated area (bool), score for this particular area calculated from the distance to the center (float)
     """
 
-    contained = is_point_in_area(point, face_landmarks[8], (calculate_head_height_metric(body_landmarks) / 2,
+    contained = is_point_in_area(point, face_landmarks[8], (calculate_head_height_metric(body_landmarks),
                                                             calculate_head_height_metric(body_landmarks) / 2))
     distance = get_landmarks_euclidean_distance(point, face_landmarks[8])
 
     return contained, 1 - distance / get_area_radius(face_landmarks[8], (
-        calculate_head_height_metric(body_landmarks) / 2, calculate_head_height_metric(body_landmarks) / 2))
+        calculate_head_height_metric(body_landmarks), calculate_head_height_metric(body_landmarks) / 2))
 
 
 def is_in_area_cheeks(point: tuple, body_landmarks: list, face_landmarks: list) -> (bool, float):
@@ -161,9 +161,11 @@ def is_in_area_cheeks(point: tuple, body_landmarks: list, face_landmarks: list) 
     """
 
     if get_landmarks_euclidean_distance(point, face_landmarks[3]) < get_landmarks_euclidean_distance(point, face_landmarks[13]):
-        closer_cheek = face_landmarks[3]
+        closer_cheek = (face_landmarks[3][0] + calculate_head_height_metric(body_landmarks) / 6,
+                      face_landmarks[3][1])
     else:
-        closer_cheek = face_landmarks[13]
+        closer_cheek = (face_landmarks[13][0] - calculate_head_height_metric(body_landmarks) / 6,
+                      face_landmarks[13][1])
 
     contained = is_point_in_area(point, closer_cheek, (calculate_head_height_metric(body_landmarks) * 0.3,
                                                      calculate_head_height_metric(body_landmarks) * 0.8))
@@ -185,10 +187,10 @@ def is_in_area_ears(point: tuple, body_landmarks: list) -> (bool, float):
 
     if get_landmarks_euclidean_distance(point, body_landmarks[16]) < get_landmarks_euclidean_distance(point, body_landmarks[17]):
         closer_ear = (body_landmarks[16][0] - calculate_head_height_metric(body_landmarks) / 8,
-                      body_landmarks[16][0] + calculate_head_height_metric(body_landmarks) / 5)
+                      body_landmarks[16][1] + calculate_head_height_metric(body_landmarks) / 5)
     else:
-        closer_ear = (body_landmarks[16][0] + calculate_head_height_metric(body_landmarks) / 8,
-                      body_landmarks[16][0] + calculate_head_height_metric(body_landmarks) / 5)
+        closer_ear = (body_landmarks[17][0] + calculate_head_height_metric(body_landmarks) / 8,
+                      body_landmarks[17][1] + calculate_head_height_metric(body_landmarks) / 5)
 
     contained = is_point_in_area(point, closer_ear, (calculate_head_height_metric(body_landmarks) * 0.3,
                                                      calculate_head_height_metric(body_landmarks) * 0.6))
@@ -209,7 +211,7 @@ def is_in_area_neck(point: tuple, body_landmarks: list, face_landmarks: list) ->
     """
 
     centered_point = (body_landmarks[1][0],
-                      body_landmarks[1][1] - calculate_head_height_metric(body_landmarks) / 2)
+                      body_landmarks[1][1] - calculate_head_height_metric(body_landmarks))
 
     contained = is_point_in_area(point, centered_point, (calculate_head_height_metric(body_landmarks),
                                                          calculate_head_height_metric(body_landmarks) * 0.8))
@@ -234,12 +236,12 @@ def is_in_area_shoulders(point: tuple, body_landmarks: list) -> (bool, float):
     else:
         closer_shoulder = body_landmarks[5]
 
-    contained = is_point_in_area(point, closer_shoulder, (calculate_head_height_metric(body_landmarks) / 2,
-                                                          calculate_head_height_metric(body_landmarks) / 2))
+    contained = is_point_in_area(point, closer_shoulder, (calculate_head_height_metric(body_landmarks),
+                                                          calculate_head_height_metric(body_landmarks)))
     distance = get_landmarks_euclidean_distance(point, closer_shoulder)
 
     return contained, 1 - distance / get_area_radius(closer_shoulder, (
-        calculate_head_height_metric(body_landmarks) / 2, calculate_head_height_metric(body_landmarks) / 2))
+        calculate_head_height_metric(body_landmarks), calculate_head_height_metric(body_landmarks)))
 
 
 def is_in_area_chest(point: tuple, body_landmarks: list) -> (bool, float):
@@ -255,12 +257,12 @@ def is_in_area_chest(point: tuple, body_landmarks: list) -> (bool, float):
     centered_point = (body_landmarks[1][0],
                       body_landmarks[1][1] + calculate_head_height_metric(body_landmarks))
 
-    contained = is_point_in_area(point, centered_point, (2 * calculate_head_height_metric(body_landmarks),
-                                                         calculate_head_height_metric(body_landmarks)))
+    contained = is_point_in_area(point, centered_point, (2.5 * calculate_head_height_metric(body_landmarks),
+                                                         2.5 * calculate_head_height_metric(body_landmarks)))
     distance = get_landmarks_euclidean_distance(point, centered_point)
 
-    return contained, 1 - distance / get_area_radius(centered_point, (2 * calculate_head_height_metric(body_landmarks),
-                                                                      calculate_head_height_metric(body_landmarks)))
+    return contained, 1 - distance / get_area_radius(centered_point, (2.5 * calculate_head_height_metric(body_landmarks),
+                                                                      2.5 * calculate_head_height_metric(body_landmarks)))
 
 
 def is_in_area_waist(point: tuple, body_landmarks: list) -> (bool, float):
@@ -325,11 +327,11 @@ def is_in_area_other_hand(point: tuple, body_landmarks: list, hand_landmarks: li
     other_hand = get_centroid(hand_landmarks)
 
     contained = is_point_in_area(point, other_hand, (calculate_head_height_metric(body_landmarks),
-                                                          calculate_head_height_metric(body_landmarks) * 1.2))
+                                                          calculate_head_height_metric(body_landmarks) * 2.5))
     distance = get_landmarks_euclidean_distance(point, other_hand)
 
     return contained, 1 - distance / get_area_radius(other_hand, (
-        calculate_head_height_metric(body_landmarks), calculate_head_height_metric(body_landmarks) * 1.2))
+        calculate_head_height_metric(body_landmarks), calculate_head_height_metric(body_landmarks) * 2.5))
 
 
 if __name__ == "__main__":
