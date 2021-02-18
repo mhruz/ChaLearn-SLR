@@ -95,7 +95,7 @@ if __name__ == "__main__":
                 input_data.append(data_sample)
                 input_labels.append(label)
 
-            inputs = torch.tensor(input_data, dtype=torch.float, device="cuda:0")
+            inputs = torch.stack(input_data)
             labels = torch.tensor(input_labels, dtype=torch.long, device="cuda:0")
 
             # zero the parameter gradients
