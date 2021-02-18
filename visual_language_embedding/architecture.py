@@ -39,3 +39,5 @@ class VLE_01(nn.Module):
         x = self.fc3(x)
 
         return x
+
+
