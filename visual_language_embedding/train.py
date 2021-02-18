@@ -89,8 +89,8 @@ if __name__ == "__main__":
             input_data = []
             input_labels = []
             for data_idx in range(idx, min(idx + batch_size, num_samples)):
-                data_sample = data["images"][indexes[data_idx]].swapaxes(2, 0) / 255.0
-                data_sample = transform(data_sample)
+                data_sample = data["images"][indexes[data_idx]]
+                data_sample = transform(image=data_sample)["image"] / 255.0
                 label = data["labels"][indexes[data_idx], 0]
                 input_data.append(data_sample)
                 input_labels.append(label)
