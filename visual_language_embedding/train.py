@@ -17,6 +17,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Train VLE on ChaLearn-SLR data.')
     parser.add_argument('train_h5', type=str, help='path to dataset with hands')
     parser.add_argument('val_h5', type=str, help='path to dataset with hands')
+    parser.add_argument('--init_net', type=str, help='path to network you want to start from')
     parser.add_argument('--max_epoch', type=int, help='number of max epochs', default=10)
     parser.add_argument('--batch_size', type=int, help='number data in one batch', default=32)
     parser.add_argument('--data_to_mem', type=bool, help='load data to memory')
@@ -49,6 +50,14 @@ if __name__ == "__main__":
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
+    start_epoch = 0
+
+    if args.init_net is not None:
+        checkpoint = torch.load(args.init_net)
+        net.load_state_dict(checkpoint["model_state_dict"])
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        start_epoch = checkpoint["epoch"]
+
     transform = A.Compose([
         #A.Blur(blur_limit=3, p=0.5),
         #A.CLAHE(tile_grid_size=(7, 7)),
@@ -76,7 +85,7 @@ if __name__ == "__main__":
     #
     # cv2.destroyAllWindows()
 
-    for epoch in range(args.max_epoch):  # loop over the dataset multiple times
+    for epoch in range(start_epoch, args.max_epoch):  # loop over the dataset multiple times
 
         batch_num = 0
         running_loss = 0.0
