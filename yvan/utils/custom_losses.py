@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 # ====================================================
 # Label Smoothing
 # ====================================================
@@ -12,6 +13,7 @@ class LabelSmoothingLoss(nn.Module):
         self.smoothing = smoothing
         self.cls = classes
         self.dim = dim
+
     def forward(self, pred, target):
         pred = pred.log_softmax(dim=self.dim)
         with torch.no_grad():
