@@ -5,8 +5,8 @@ from mbohacek.location_area_checks import *
 from mbohacek.config import *
 
 
-def get_other_arm_to_hand_point(point: tuple, body_landmarks: list) -> str:
-    if get_landmarks_euclidean_distance(point, body_landmarks[4]) < get_landmarks_euclidean_distance(point, body_landmarks[7]):
+def get_other_arm_to_hand_point(hand: list, body_landmarks: list) -> str:
+    if get_landmarks_euclidean_distance(hand[0], body_landmarks[4]) < get_landmarks_euclidean_distance(hand[0], body_landmarks[7]):
         # Point belongs to the right hand -> the other hand is left
         return "left"
     else:
