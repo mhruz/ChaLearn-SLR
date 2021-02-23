@@ -24,6 +24,8 @@ if __name__ == "__main__":
 
     for index in indexes:
         sample = list(joints_h5.keys())[index]
+        f_out.create_dataset(sample, shape=(args.key_frames, ), dtype=np.int)
+
         if args.video_root is not None:
             cap = cv2.VideoCapture(os.path.join(args.video_root, sample + ".mp4"))
 
@@ -50,6 +52,8 @@ if __name__ == "__main__":
             whole_body_speed_copy[idx2-window:idx2+window] = np.inf
             whole_body_speed_copy[idx2] = np.inf
 
+        f_out[sample] = min_idxs
+
         if args.video_root is not None:
             min_idxs = np.sort(min_idxs)
             for n, i in enumerate(min_idxs):
@@ -68,4 +72,6 @@ if __name__ == "__main__":
             plt.title(sample)
             plt.show()
 
-        cv2.destroyAllWindows()
+            cv2.destroyAllWindows()
+
+    f_out.close()
