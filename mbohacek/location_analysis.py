@@ -34,10 +34,10 @@ def analyze_hand_position(hands_data: list) -> (str, tuple):
     hands_data = [(x_convert(landmark[0]), y_convert(landmark[1])) for landmark in hands_data]
 
     # Identify which fingers are up
-    index_finger_up = get_landmarks_euclidean_distance(hands_data[8], hands_data[5]) > 0.3
-    middle_finger_up = get_landmarks_euclidean_distance(hands_data[12], hands_data[9]) > 0.3
-    ring_finger_up = get_landmarks_euclidean_distance(hands_data[16], hands_data[13]) > 0.3
-    little_finger_up = get_landmarks_euclidean_distance(hands_data[20], hands_data[17]) > 0.3
+    index_finger_up = round(get_landmarks_euclidean_distance(hands_data[8], hands_data[5]), 2) > 0.5
+    middle_finger_up = round(get_landmarks_euclidean_distance(hands_data[12], hands_data[9]), 2) > 0.5
+    ring_finger_up = round(get_landmarks_euclidean_distance(hands_data[16], hands_data[13]), 2) > 0.5
+    little_finger_up = round(get_landmarks_euclidean_distance(hands_data[20], hands_data[17]), 2) > 0.5
 
     # Analyze the hand gesture scenario
     hand_gesture = "other"
@@ -50,6 +50,7 @@ def analyze_hand_position(hands_data: list) -> (str, tuple):
     # Calculate the centroid of the hand
     centroid = (starting_point[0] + (ending_point[0] - starting_point[0]) / 2, starting_point[1] + (ending_point[1] - starting_point[1]) / 2)
 
+    # print("-->", hand_gesture)
     return hand_gesture, centroid
 
 
@@ -65,6 +66,11 @@ def analyze_hands_areas(body_landmarks: list, hands: list, face_landmarks: list)
     """
 
     output = []
+
+    # Prevent from passing two identical hands as different
+    if len(hands) == 2:
+        if hands[0] == hands[1]:
+            hands = [hands[0]]
 
     # Iterate over the hands (first two found)
     for hand_index, hand in enumerate(hands[:2]):
@@ -135,9 +141,9 @@ def analyze_hands_areas(body_landmarks: list, hands: list, face_landmarks: list)
                 results[subjected_point_id]["chest"] = score * HAND_POINT_WEIGHT[hand_gesture][subjected_point_id]
 
             # Area: Waist
-            contained, score = is_in_area_waist(subjected_point_coordinates, body_landmarks)
-            if contained:
-                results[subjected_point_id]["waist"] = score * HAND_POINT_WEIGHT[hand_gesture][subjected_point_id]
+            #contained, score = is_in_area_waist(subjected_point_coordinates, body_landmarks)
+            #if contained:
+            #    results[subjected_point_id]["waist"] = score * HAND_POINT_WEIGHT[hand_gesture][subjected_point_id]
 
             # Area: Other hand
             if len(hands) >= 2:
@@ -152,7 +158,7 @@ def analyze_hands_areas(body_landmarks: list, hands: list, face_landmarks: list)
 
             # Area: Arm
             contained, score = is_in_area_arm(subjected_point_coordinates, body_landmarks,
-                                              get_other_arm_to_hand_point(subjected_point_coordinates, body_landmarks))
+                                              get_other_arm_to_hand_point(hand, body_landmarks))
             if contained:
                 results[subjected_point_id]["arm"] = score * HAND_POINT_WEIGHT[hand_gesture][subjected_point_id]
 
@@ -176,6 +182,11 @@ def analyze_hands_areas(body_landmarks: list, hands: list, face_landmarks: list)
         normalized_results = normalize_dictionary(overall_results)
 
         output.append(normalized_results)
+
+    # Append neutral hand analyses until at least 2 are present
+    while len(output) < 2:
+        overall_results = {"neutral_space": 1}
+        output.append(normalize_dictionary(overall_results))
 
     return output
 
