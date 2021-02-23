@@ -12,11 +12,38 @@ from albumentations.pytorch import ToTensorV2
 import cv2
 
 
+# ====================================================
+# Label Smoothing
+# ====================================================
+class LabelSmoothingLoss(nn.Module):
+    def __init__(self, classes, smoothing=0.0, dim=-1):
+        """
+
+        :param classes: number of classes
+        :param smoothing: the max likelihood value = 1 - smoothing
+        :param dim:
+        """
+        super(LabelSmoothingLoss, self).__init__()
+        self.confidence = 1.0 - smoothing
+        self.smoothing = smoothing
+        self.cls = classes
+        self.dim = dim
+
+    def forward(self, pred, target):
+        pred = pred.log_softmax(dim=self.dim)
+        with torch.no_grad():
+            true_dist = torch.zeros_like(pred)
+            true_dist.fill_(self.smoothing / (self.cls - 1))
+            true_dist.scatter_(1, target.data.unsqueeze(1), self.confidence)
+        return torch.mean(torch.sum(-true_dist * pred, dim=self.dim))
+
+
 if __name__ == "__main__":
     # parse commandline
     parser = argparse.ArgumentParser(description='Train VLE on ChaLearn-SLR data.')
     parser.add_argument('train_h5', type=str, help='path to dataset with hands')
     parser.add_argument('val_h5', type=str, help='path to dataset with hands')
+    parser.add_argument('--init_net', type=str, help='path to network you want to start from')
     parser.add_argument('--max_epoch', type=int, help='number of max epochs', default=10)
     parser.add_argument('--batch_size', type=int, help='number data in one batch', default=32)
     parser.add_argument('--data_to_mem', type=bool, help='load data to memory')
@@ -36,7 +63,6 @@ if __name__ == "__main__":
     num_val_samples = len(val_data["labels"])
 
     indexes = list(range(num_samples))
-    random.shuffle(indexes)
 
     batch_size = args.batch_size
 
@@ -47,7 +73,17 @@ if __name__ == "__main__":
     net.cuda()
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+    # criterion = LabelSmoothingLoss(65, 0.2)
+    # optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+    optimizer = optim.Adam(net.parameters(), lr=3e-4)
+
+    start_epoch = 0
+
+    if args.init_net is not None:
+        checkpoint = torch.load(args.init_net)
+        net.load_state_dict(checkpoint["model_state_dict"])
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        start_epoch = checkpoint["epoch"]
 
     transform = A.Compose([
         #A.Blur(blur_limit=3, p=0.5),
@@ -64,7 +100,7 @@ if __name__ == "__main__":
         ToTensorV2()
     ])
 
-    # im = data["images"][5454]
+    # im = data["images"][9879]
     # cv2.namedWindow("im", 2)
     # cv2.namedWindow("im_aug", 2)
     # cv2.imshow("im", im)
@@ -76,11 +112,13 @@ if __name__ == "__main__":
     #
     # cv2.destroyAllWindows()
 
-    for epoch in range(args.max_epoch):  # loop over the dataset multiple times
+    for epoch in range(start_epoch, args.max_epoch):  # loop over the dataset multiple times
 
         batch_num = 0
         running_loss = 0.0
         running_acc = 0.0
+
+        random.shuffle(indexes)
         net.train()
 
         for idx in range(0, num_samples, batch_size):
