@@ -221,4 +221,4 @@ if __name__ == "__main__":
                         # cv2.waitKey()
                         # cv2.destroyAllWindows()
 
-    pickle.dump(candidates, open("candidates.p", "wb"))
+    pickle.dump(candidates, open(args.output, "wb"))
