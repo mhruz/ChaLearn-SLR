@@ -166,7 +166,10 @@ if __name__ == "__main__":
 
                 for frame, sample in zip(sign_clusters_data[sign_class]["frames"],
                                          sign_clusters_data[sign_class]["samples"]):
-                    sample = sample.decode("utf-8")
+
+                    if isinstance(sample, bytes):
+                        sample = sample.decode("utf-8")
+                        
                     if sample == sample_ref and frame == frame_ref:
                         continue
 
