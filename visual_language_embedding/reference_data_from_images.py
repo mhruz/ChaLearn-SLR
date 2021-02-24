@@ -145,7 +145,7 @@ if __name__ == "__main__":
             new_hand = True
             for ref_hand in reference_hands[hand_class]:
                 dist = compute_hand_pose_distance_weighted(ref_hand, hand_ref, shoulder_ref)
-                if dist < args.max_distance / 2:
+                if dist < args.max_dist / 2:
                     new_hand = False
                     break
 
@@ -169,7 +169,7 @@ if __name__ == "__main__":
 
                     if isinstance(sample, bytes):
                         sample = sample.decode("utf-8")
-                        
+
                     if sample == sample_ref and frame == frame_ref:
                         continue
 
