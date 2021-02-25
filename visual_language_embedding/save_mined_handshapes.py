@@ -18,7 +18,7 @@ if __name__ == "__main__":
     f_hand_crops = h5py.File(args.hand_crops, "r")
 
     for hand_class in data:
-        if len(hand_class) == 0:
+        if len(data[hand_class]) == 0:
             continue
 
         os.makedirs(os.path.join(args.data_root, hand_class), exist_ok=True)

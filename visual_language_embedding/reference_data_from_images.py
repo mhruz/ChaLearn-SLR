@@ -54,6 +54,9 @@ if __name__ == "__main__":
     parser.add_argument('sign_clusters_h5', type=str, help='path to dataset hand poses by sign')
     parser.add_argument('--max_dist', type=float,
                         help='maximal distance between hand poses considered to be the same hand pose', default=0.6)
+    parser.add_argument('--same_dist', type=float,
+                        help='maximal distance between hand poses considered to be the same reference image',
+                        default=0.3)
     parser.add_argument('--min_conf', type=float,
                         help='minimal accepted confidence of joint estimation', default=0.7)
     parser.add_argument('--max_samples', type=int,
@@ -145,7 +148,7 @@ if __name__ == "__main__":
             new_hand = True
             for ref_hand in reference_hands[hand_class]:
                 dist = compute_hand_pose_distance_weighted(ref_hand, hand_ref, shoulder_ref)
-                if dist < args.max_dist / 2:
+                if dist < args.same_dist:
                     new_hand = False
                     break
 
