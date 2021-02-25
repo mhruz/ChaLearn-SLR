@@ -1,16 +1,17 @@
 
-import random
-import logging
-
 from mbohacek.location_analysis import *
 from mbohacek.fav_disc_space_management import *
 
-img_location, img_pil, landmarks_fav_format = download_and_process_frame(random.choice(df["vid_file"].tolist()), 10, True, True)
-# img_location, img_pil, landmarks_fav_format = download_and_process_frame("signer0_sample1103_color.mp4", 20, True, True)
+
+chalearn_data_manager = ChaLearnDataManager("/Users/matyasbohacek/Documents/Academics/Materials/CVPR SLR ChaLearn/Data/train_json_keypoints-raw.h5",
+                                            "/Users/matyasbohacek/Documents/Academics/Materials/CVPR SLR ChaLearn/Data/labels_jpg.csv", True,
+                                            "img_transfered")
+
+img_location, img_pil, landmarks_fav_format = chalearn_data_manager.download_and_process_frame("signer0_sample1103_color.mp4", 20, True, True)
 
 img = cv2.imread(img_location)
 
-found_body, found_hands = fav_format_to_structured(landmarks_fav_format)
+found_body, found_hands = chalearn_data_manager.fav_format_to_structured(landmarks_fav_format)
 found_face = analyze_face_landmarks(img)[0]
 
 if found_face:
