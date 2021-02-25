@@ -54,7 +54,7 @@ def analyze_hand_position(hands_data: list) -> (str, tuple):
     return hand_gesture, centroid
 
 
-def analyze_hands_areas(body_landmarks: list, hands: list, face_landmarks: list):
+def analyze_hands_areas(body_landmarks: list, hands: list, face_landmarks: list, landmarks_analysis_confidence: float = 1):
     """
     The main function which orchestrates the individual areas managers and flags all of the areas that the hand is
     interacting with or is simply located within.
@@ -62,6 +62,8 @@ def analyze_hands_areas(body_landmarks: list, hands: list, face_landmarks: list)
     :param body_landmarks: List of body landmarks
     :param hands: List of lists of hands landmarks
     :param face_landmarks: List of face landmarks
+    :param landmarks_analysis_confidence: Confidence of the landmarks analysis based on which to determine the subjected
+           landmarks within for the analysis
     :return: List of resulting dictionaries with scores for the areas for each hand
     """
 
@@ -78,8 +80,12 @@ def analyze_hands_areas(body_landmarks: list, hands: list, face_landmarks: list)
 
         results = {"centroid": {}, "index_tip": {}}
 
+        subjected_points_config = [("centroid", centroid), ("index_tip", hand[8])]
+        if landmarks_analysis_confidence < 0.3:
+            subjected_points_config = [("centroid", centroid)]
+
         # Iterate over the individual points to compare and flag for areas
-        for subjected_point_id, subjected_point_coordinates in [("centroid", centroid), ("index_tip", hand[8])]:
+        for subjected_point_id, subjected_point_coordinates in subjected_points_config:
 
             if not body_landmarks:
                 continue

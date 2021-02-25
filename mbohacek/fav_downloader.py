@@ -8,11 +8,14 @@ import random
 from mbohacek.location_analysis import *
 from mbohacek.fav_disc_space_management import *
 
+chalearn_data_manager = ChaLearnDataManager("/Users/matyasbohacek/Documents/Academics/Materials/CVPR SLR ChaLearn/Data/train_json_keypoints-raw.h5",
+                                            "/Users/matyasbohacek/Documents/Academics/Materials/CVPR SLR ChaLearn/Data/labels_jpg.csv", True,
+                                            "img_transfered")
 downloaded_frames = []
 
-while len(downloaded_frames) < 15:
+while len(downloaded_frames) < 25:
     try:
-        img_location, img_pil, landmarks_fav_format = download_and_process_frame(random.choice(df["vid_file"].tolist()), 20, True, True)
+        img_location, img_pil, landmarks_fav_format = chalearn_data_manager.download_and_process_frame(random.choice(chalearn_data_manager.labels_info_df["vid_file"].tolist()), 20, True, True)
     except:
         print("Error occured. Skipping iteration")
         continue
@@ -22,8 +25,13 @@ while len(downloaded_frames) < 15:
 
     img = cv2.imread(img_location)
 
-    found_body, found_hands = fav_format_to_structured(landmarks_fav_format)
-    found_face = analyze_face_landmarks(img)[0]
+    try:
+        found_body, found_hands = chalearn_data_manager.fav_format_to_structured(landmarks_fav_format)
+        found_face = analyze_face_landmarks(img)[0]
+    except:
+        os.remove(img_location)
+        print("One frame discarded, as face was not identified.")
+        continue
 
     if not found_face:
         os.remove(img_location)
