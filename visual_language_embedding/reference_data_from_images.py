@@ -53,12 +53,12 @@ if __name__ == "__main__":
     parser.add_argument('joints_h5', type=str, help='path to dataset with hand joints')
     parser.add_argument('sign_clusters_h5', type=str, help='path to dataset hand poses by sign')
     parser.add_argument('--max_dist', type=float,
-                        help='maximal distance between hand poses considered to be the same hand pose', default=0.6)
+                        help='maximal distance between hand poses considered to be the same hand pose', default=1.5)
     parser.add_argument('--same_dist', type=float,
                         help='maximal distance between hand poses considered to be the same reference image',
                         default=0.3)
     parser.add_argument('--min_conf', type=float,
-                        help='minimal accepted confidence of joint estimation', default=0.7)
+                        help='minimal accepted confidence of joint estimation', default=0.6)
     parser.add_argument('--max_samples', type=int,
                         help='maximum number of reference images (if there is more, the reference class is ignored)',
                         default=1000)
@@ -89,8 +89,8 @@ if __name__ == "__main__":
     hand_pose_classes = [x for x in hand_pose_classes if
                          not x.startswith("_") and os.path.isdir(os.path.join(args.data_root, x))]
 
-    # sample_ref = "signer0_sample56_color"
-    # frame_ref = 35
+    # sample_ref = "signer5_sample378_color"
+    # frame_ref = 17
     # joints_ref = f_joints[sample_ref][frame_ref]
     # joints_ref = np.reshape(joints_ref, (-1, 3))
     #
@@ -98,16 +98,17 @@ if __name__ == "__main__":
     # shoulder_ref = np.linalg.norm(joints_ref[1, :2] - joints_ref[2, :2]).item()
     # hand_ref_conf = np.mean(joints_ref[8:29][:, 2])
     #
-    # sample = "signer3_sample13_color"
-    # frame = 52
-    #
+    # sample = "signer4_sample427_color"
+    # frame = 48
     # joints = f_joints[sample][frame]
     # joints = np.reshape(joints, (-1, 3))
     #
     # hand = joints[8:29][:, :2]
     # hand_conf = np.mean(joints[8:29][:, 2])
     #
-    # dist = compute_hand_pose_distance_weighted(hand, hand_ref, shoulder_ref)
+    # hand_size = np.max(np.linalg.norm(np.array([hand_ref[0, :]] * 20) - hand_ref[1:], axis=1))
+    #
+    # dist = compute_hand_pose_distance_weighted(hand, hand_ref, hand_size)
 
     all_ref_samples = []
     candidates = {}
@@ -140,14 +141,16 @@ if __name__ == "__main__":
             joints_ref = np.reshape(joints_ref, (-1, 3))
 
             hand_ref = joints_ref[8:29][:, :2]
-            shoulder_ref = np.linalg.norm(joints_ref[1, :2] - joints_ref[2, :2]).item()
+            # shoulder_ref = np.linalg.norm(joints_ref[1, :2] - joints_ref[2, :2]).item()
             hand_ref_conf = np.mean(joints_ref[8:29][:, 2])
             if hand_ref_conf < args.min_conf:
                 continue
 
+            hand_size = np.max(np.linalg.norm(np.array([hand_ref[0, :]] * 20) - hand_ref[1:], axis=1))
+
             new_hand = True
             for ref_hand in reference_hands[hand_class]:
-                dist = compute_hand_pose_distance_weighted(ref_hand, hand_ref, shoulder_ref)
+                dist = compute_hand_pose_distance_weighted(ref_hand, hand_ref, hand_size)
                 if dist < args.same_dist:
                     new_hand = False
                     break
@@ -188,7 +191,7 @@ if __name__ == "__main__":
                     if hand_conf < 0.55:
                         continue
 
-                    dist = compute_hand_pose_distance_weighted(hand, hand_ref, shoulder_ref)
+                    dist = compute_hand_pose_distance_weighted(hand, hand_ref, hand_size)
 
                     if dist < args.max_dist:
                         # look for the candidate in another class
