@@ -3,3 +3,5 @@ imutils==0.5.4
 dlib==19.21.1
 mediapipe==0.8.2
 torch==1.7.1
+paramiko==2.7.2
+h5py==2.10.0
