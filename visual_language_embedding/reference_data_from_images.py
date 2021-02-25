@@ -200,7 +200,7 @@ if __name__ == "__main__":
                                         if hand_class != candidate_class:
                                             candidates[hand_class].append({"sample": sample_string, "distance": dist})
                                         else:
-                                            candidate["dist"] = dist
+                                            candidate["distance"] = dist
 
                                     end_loop = True
                                     break
