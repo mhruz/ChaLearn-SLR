@@ -77,6 +77,10 @@ class ChaLearnDataManager:
                  `convert_to_coordinates`)
         """
 
+        # Check whether the desired frame exists
+        if len(self.keypoints_data_file[sign_sample_id]) <= frame:
+            return False, 0.0
+
         # Structure only the raw sample name, if given with video extension
         if sign_sample_id.endswith(".mp4"):
             sign_sample_id = sign_sample_id.replace(".mp4", "")

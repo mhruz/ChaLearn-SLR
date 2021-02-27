@@ -59,6 +59,9 @@ for sign_sample_id, group_subdf in grouped_sign_vid_instances:
 
         # Fetch the landmarks and the confidence saved from the OpenPose
         landmarks_fav_format, average_confidence = chalearn_data_manager.get_saved_landmarks(sign_sample_id.replace(".mp4", ""), row_index, True, True, width, height)
+        # If the desired frame is not present in the landmark dataset, end the processing (sometimes OpenPose does not process last frames of video)
+        if not landmarks_fav_format:
+            break
 
         # Convert the landmarks to relevant format and analyze face landmarks
         found_body, found_hands = chalearn_data_manager.fav_format_to_structured(landmarks_fav_format)
