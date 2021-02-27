@@ -188,7 +188,7 @@ if __name__ == "__main__":
                     hand = joints[8:29][:, :2]
                     hand_conf = np.mean(joints[8:29][:, 2])
 
-                    if hand_conf < 0.55:
+                    if hand_conf < args.min_conf:
                         continue
 
                     dist = compute_hand_pose_distance_weighted(hand, hand_ref, hand_size)
