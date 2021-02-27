@@ -13,7 +13,7 @@ if __name__ == "__main__":
     parser.add_argument('val_set', type=str, help='path to output validation h5 dataset')
     args = parser.parse_args()
 
-    hand_pose_classes = os.listdir(args.data_root)
+    hand_pose_classes = os.listdir(args.hand_clusters)
 
     hand_pose_classes = [x for x in hand_pose_classes if
                          not x.startswith("_") and os.path.isdir(os.path.join(args.hand_clusters, x))]
