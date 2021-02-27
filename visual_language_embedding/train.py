@@ -66,7 +66,7 @@ if __name__ == "__main__":
 
     batch_size = args.batch_size
 
-    net = models.resnet18()
+    net = models.resnet18(pretrained=True)
     # replace classification layer
     net.fc = nn.Linear(512, 65)
     # net = VLE_01(65)
