@@ -119,8 +119,9 @@ if __name__ == "__main__":
         if len(images_class) < args.max_samples:
             candidates[hand_class] = []
             hand_pose_classes_valid.append(hand_class)
-            for image_fn in images_class:
-                all_ref_samples.append(image_fn)
+
+        for image_fn in images_class:
+            all_ref_samples.append(image_fn)
 
     hand_pose_classes = hand_pose_classes_valid
     reference_hands = {}
