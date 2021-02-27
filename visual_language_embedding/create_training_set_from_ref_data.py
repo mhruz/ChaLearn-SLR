@@ -16,7 +16,7 @@ if __name__ == "__main__":
     hand_pose_classes = os.listdir(args.data_root)
 
     hand_pose_classes = [x for x in hand_pose_classes if
-                         not x.startswith("_") and os.path.isdir(os.path.join(args.data_root, x))]
+                         not x.startswith("_") and os.path.isdir(os.path.join(args.hand_clusters, x))]
 
     f_train_out = h5py.File(args.train_set, "w")
     f_train_out.create_dataset("images", (100, 70, 70, 3), maxshape=(None, 70, 70, 3), dtype=np.uint8)
