@@ -45,7 +45,7 @@ if __name__ == "__main__":
         net.classifier[1] = nn.Linear(1280, args.num_classes)
 
     # net = VLE_01(65)
-    net.cuda()
+    net.cuda(device="cuda:{}".format(args.device))
     start_epoch = 0
 
     if args.net.endswith(".tar"):

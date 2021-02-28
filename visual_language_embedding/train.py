@@ -87,7 +87,7 @@ if __name__ == "__main__":
         net.classifier[1] = nn.Linear(1280, args.num_classes)
 
     # net = VLE_01(65)
-    net.cuda()
+    net.cuda(device="cuda:{}".format(args.device))
 
     criterion = nn.CrossEntropyLoss()
     # criterion = LabelSmoothingLoss(65, 0.2)
