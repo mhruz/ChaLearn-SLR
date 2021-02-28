@@ -1,6 +1,7 @@
 
 import argparse
 
+from mbohacek.util import *
 from mbohacek.fav_disc_space_management import *
 from mbohacek.location_analysis import *
 
@@ -10,9 +11,13 @@ parser = argparse.ArgumentParser("Hand Location Analysis: Annotations Script", a
 
 parser.add_argument("--images_directory", type=str, default="img_transfered", help="Path to the directory with the "
                     "images of the individul frames")
-parser.add_argument("--keypoints_datafile", type=str, default="/Users/matyasbohacek/Documents/Academics/Materials/CVPR SLR ChaLearn/Data/train_json_keypoints-raw.h5",
+parser.add_argument("--video_directory", type=str, default="vid", help="Path to the directory with the videos of the "
+                    "sign samples")
+parser.add_argument("--processing_type", type=str, choices=["img", "vid"], default="vid", help="Determines whether the"
+                    " annotations should be made on top of preprocessed and divided frames images or complete videos")
+parser.add_argument("--keypoints_datafile", type=str, default="/Users/matyasbohacek/Documents/Academics/Materials/CVPR SLR ChaLearn/Data/val_json_keypoints-raw.h5",
                     help="Path to the HDF5 file with the body pose landmarks from OpenPose for all the sign instances")
-parser.add_argument("--labels_info_path", type=str, default="/Users/matyasbohacek/Documents/Academics/Materials/CVPR SLR ChaLearn/Data/labels_jpg.csv",
+parser.add_argument("--labels_info_path", type=str, default="/Users/matyasbohacek/Documents/Academics/Materials/CVPR SLR ChaLearn/Data/train_labels_val.csv",
                     help="Path to the CSV table with the properties of all the sign instances and corresponding frames")
 parser.add_argument("--output_file", type=str, default="out.h5", help="Path to the HDF5 file into which the arrays with"
                     " the soft vectors for each sign video sample will written.")
@@ -25,36 +30,71 @@ parser.add_argument("--logging", type=str, choices=["normal", "full"], default="
 args = parser.parse_args()
 
 # MARK: Properies
-chalearn_data_manager = ChaLearnDataManager(args.keypoints_datafile, args.labels_info_path, args.download,
-                                            args.images_directory)
+if args.processing_type == "img":
+    chalearn_data_manager = ChaLearnDataManager(args.keypoints_datafile, args.labels_info_path, args.download,
+                                                args.images_directory)
+else:
+    chalearn_data_manager = ChaLearnDataManager(args.keypoints_datafile, "", args.download, "")
+
 output_datafile = h5py.File(args.output_file, 'w')
 print("Successfully loaded all of the supporting files.")
 
-# Group the instances by the individual videos
-grouped_sign_vid_instances = chalearn_data_manager.labels_info_df.groupby(chalearn_data_manager.labels_info_df.vid_file)
-print("Found", grouped_sign_vid_instances.ngroups, "individual sign instances.")
+if args.processing_type == "img":
+    # Group the instances by the individual videos for image processing
+    grouped_sign_vid_instances = chalearn_data_manager.labels_info_df.groupby(chalearn_data_manager.labels_info_df.vid_file)
+    num_instances = grouped_sign_vid_instances.ngroups
+else:
+    # Load the standalone annotations for video processing
+    samples_df = pd.read_csv(args.labels_info_path, encoding="utf-8", sep=" ", header=None)
+    samples_df.columns = ["vid_file", "label"]
+
+    # Wrap the video names temporarily into a tuple list to satisfy the for loop
+    grouped_sign_vid_instances = zip(samples_df["vid_file"].to_list(), [None] * samples_df.shape[0])
+    num_instances = samples_df.shape[0]
+
+print("Found", num_instances, "individual sign instances.")
 
 print("Starting the annotation process.")
 
 for sign_sample_id, group_subdf in grouped_sign_vid_instances:
 
+    frame_numbers = np.empty(shape=(0,))
     locations_soft_vec_array = np.empty(shape=(0, 2, 15))
 
+    iterator = None
+
+    if args.processing_type == "img":
+        # Reset the indexing of the group to discard the original full-dataframe order
+        group_subdf = group_subdf.reset_index()
+        iterator = group_subdf.iterrows()
+
+        num_frames = str(group_subdf.shape[0])
+
+    else:
+        # Parse all of the frames from the video
+        sign_sample_id += "_color.mp4"
+        frames = get_frames_from_video(os.path.join(args.video_directory, sign_sample_id))
+        iterator = enumerate(frames)
+
+        num_frames = len(frames)
+
     if args.logging == "full":
-        print("\tCurrently annotating `" + sign_sample_id + "`. Found " + str(group_subdf.shape[0]) + " frames.")
+        print("\tCurrently annotating `" + sign_sample_id + "`. Found " + str(num_frames) + " frames.")
 
-    # Reset the indexing of the group to discard the original full-dataframe order
-    group_subdf = group_subdf.reset_index()
+    for row_index, row in iterator:
+        if args.processing_type == "img":
+            file_name = row["img_file"]
+            local_file_name = os.path.join(args.images_directory, file_name)
 
-    for row_index, row in group_subdf.iterrows():
-        file_name = row["img_file"]
-        local_file_name = os.path.join(args.images_directory, file_name)
+            # Download the frame image from server if relevant flag is set
+            if args.download:
+                chalearn_data_manager.download_image(file_name, file_name)
 
-        # Download the frame image from server if relevant flag is set
-        if args.download:
-            chalearn_data_manager.download_image(file_name, file_name)
+            img = cv2.imread(local_file_name)
 
-        img = cv2.imread(local_file_name)
+        else:
+            img = row
+
         height, width, _ = img.shape
 
         # Fetch the landmarks and the confidence saved from the OpenPose
@@ -93,10 +133,14 @@ for sign_sample_id, group_subdf in grouped_sign_vid_instances:
             fallback_vec[0][1] = 1
             locations_soft_vec_array = np.append(locations_soft_vec_array, [fallback_vec], axis=0)
 
-    output_datafile.create_dataset(sign_sample_id.replace(".mp4", ""), data=locations_soft_vec_array)
+        frame_numbers = np.append(frame_numbers, [row_index], axis=0)
+
+    output_datafile.create_group(sign_sample_id.replace(".mp4", ""))
+    output_datafile[sign_sample_id.replace(".mp4", "")].create_dataset("frame_number", data=frame_numbers.astype(int))
+    output_datafile[sign_sample_id.replace(".mp4", "")].create_dataset("vector", data=locations_soft_vec_array)
 
 print("Annotation finished.")
 
 output_datafile.close()
 
-print("The data was successfully written into a HDF5 file.")
+print("The data was successfully written into an HDF5 file.")
