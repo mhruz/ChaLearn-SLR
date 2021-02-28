@@ -209,7 +209,7 @@ if __name__ == "__main__":
             for data_idx in range(idx, min(idx + batch_size, num_val_samples)):
                 data_sample = val_data["images"][data_idx]
                 data_sample = val_transform(image=data_sample)["image"]
-                label = data["labels"][indexes[data_idx], 0]
+                label = val_data["labels"][data_idx, 0]
                 input_data.append(data_sample)
                 input_labels.append(label)
 
