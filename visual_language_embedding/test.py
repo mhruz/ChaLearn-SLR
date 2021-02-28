@@ -19,6 +19,7 @@ if __name__ == "__main__":
     parser.add_argument('--max_epoch', type=int, help='number of max epochs', default=10)
     parser.add_argument('--batch_size', type=int, help='number data in one batch', default=32)
     parser.add_argument('--data_to_mem', type=bool, help='load data to memory')
+    parser.add_argument('--device', type=int, help='device number', default=0)
     parser.add_argument('output', type=str, help='path to output')
     args = parser.parse_args()
 
@@ -67,22 +68,23 @@ if __name__ == "__main__":
             input_data.append(data_sample)
             input_labels.append(label)
 
-        inputs = torch.stack(input_data).to("cuda:0")
-        labels = torch.tensor(input_labels, dtype=torch.long, device="cuda:0")
+        inputs = torch.stack(input_data).to("cuda:{}".format(args.device))
+        labels = torch.tensor(input_labels, dtype=torch.long, device="cuda:{}".format(args.device))
 
         outputs = net(inputs)
 
         acc += (torch.argmax(outputs, dim=1) == labels).sum().item()
         num_batches += 1
 
-        for i, sample in enumerate(inputs):
-            print("sample {}, pred={}, label={} *{}*".format(idx + i, torch.argmax(outputs[i]).item(),
+        for data_idx in range(idx, min(idx + batch_size, num_samples)):
+            i = data_idx - idx
+            print("sample {}, pred={}, label={} *{}*".format(data_idx, torch.argmax(outputs[i]).item(),
                                                              labels[i].item(),
                                                              (torch.argmax(outputs[i]) == labels[i]).item()))
 
             os.makedirs("g:/hands_test/{}".format(torch.argmax(outputs[i]).item()), exist_ok=True)
             cv2.imwrite(os.path.join("g:/hands_test/{}".format(torch.argmax(outputs[i]).item()),
                                      "{}_{}.jpg".format(idx + i, labels[i].item())),
-                        sample.cpu().numpy().swapaxes(2, 0) * 255)
+                        data["images"][data_idx])
 
     print("Test acc: {}".format(acc / num_samples))

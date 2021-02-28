@@ -52,6 +52,7 @@ if __name__ == "__main__":
     parser.add_argument('--data_to_mem', type=bool, help='load data to memory')
     parser.add_argument('--save_epoch', type=int, help='after how many epoch to save the model', default=1)
     parser.add_argument('--resize', type=int, help='resize images to this size')
+    parser.add_argument('--device', type=int, help='device number', default=0)
     parser.add_argument('output', type=str, help='path to output network')
     args = parser.parse_args()
 
@@ -162,8 +163,8 @@ if __name__ == "__main__":
                 input_data.append(data_sample)
                 input_labels.append(label)
 
-            inputs = torch.stack(input_data).to("cuda:0")
-            labels = torch.tensor(input_labels, dtype=torch.long, device="cuda:0")
+            inputs = torch.stack(input_data).to("cuda:{}".format(args.device))
+            labels = torch.tensor(input_labels, dtype=torch.long, device="cuda:{}".format(args.device))
 
             # zero the parameter gradients
             optimizer.zero_grad()
@@ -202,8 +203,8 @@ if __name__ == "__main__":
                 input_data.append(data_sample)
                 input_labels.append(label)
 
-            inputs = torch.stack(input_data).to("cuda:0")
-            labels = torch.tensor(input_labels, dtype=torch.long, device="cuda:0")
+            inputs = torch.stack(input_data).to("cuda:{}".format(args.device))
+            labels = torch.tensor(input_labels, dtype=torch.long, device="cuda:{}".format(args.device))
 
             outputs = net(inputs)
             loss = criterion(outputs, labels)
