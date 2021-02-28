@@ -43,6 +43,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Train VLE on ChaLearn-SLR data.')
     parser.add_argument('train_h5', type=str, help='path to dataset with hands')
     parser.add_argument('val_h5', type=str, help='path to dataset with hands')
+    parser.add_argument('model', type=str, help='resnet-18, mobilenet, vle')
+    parser.add_argument('num_classes', type=int, help='number of classes')
+    parser.add_argument('--pretrained', type=bool, help='whether to use pretrained model', default=False)
     parser.add_argument('--init_net', type=str, help='path to network you want to start from')
     parser.add_argument('--max_epoch', type=int, help='number of max epochs', default=10)
     parser.add_argument('--batch_size', type=int, help='number data in one batch', default=32)
@@ -66,16 +69,28 @@ if __name__ == "__main__":
 
     batch_size = args.batch_size
 
-    net = models.resnet18(pretrained=True)
-    # replace classification layer
-    net.fc = nn.Linear(512, 65)
+    if args.model == "resnet-18":
+        if args.pretrained:
+            net = models.resnet18(pretrained=True)
+        else:
+            net = models.resnet18(pretrained=False)
+        # replace classification layer
+        net.fc = nn.Linear(512, args.num_classes)
+    elif args.model == "mobilenet":
+        if args.pretrained:
+            net = models.mobilenet_v2(pretrained=True)
+        else:
+            net = models.mobilenet_v2(pretrained=False)
+
+        net.classifier[1] = nn.Linear(1280, args.num_classes)
+
     # net = VLE_01(65)
     net.cuda()
 
     criterion = nn.CrossEntropyLoss()
     # criterion = LabelSmoothingLoss(65, 0.2)
-    # optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
-    optimizer = optim.Adam(net.parameters(), lr=3e-4)
+    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+    # optimizer = optim.Adam(net.parameters(), lr=3e-4)
 
     start_epoch = 0
 
