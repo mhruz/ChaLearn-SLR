@@ -51,6 +51,7 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', type=int, help='number data in one batch', default=32)
     parser.add_argument('--data_to_mem', type=bool, help='load data to memory')
     parser.add_argument('--save_epoch', type=int, help='after how many epoch to save the model', default=1)
+    parser.add_argument('--resize', type=int, help='resize images to this size')
     parser.add_argument('output', type=str, help='path to output network')
     args = parser.parse_args()
 
@@ -100,20 +101,35 @@ if __name__ == "__main__":
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         start_epoch = checkpoint["epoch"]
 
-    transform = A.Compose([
-        #A.Blur(blur_limit=3, p=0.5),
-        #A.CLAHE(tile_grid_size=(7, 7)),
-        A.ColorJitter(hue=0.05),
-        A.HorizontalFlip(),
-        A.GaussNoise(var_limit=(5, 15)),
-        A.GridDistortion(),
-        A.MotionBlur(),
-        A.RandomBrightnessContrast(brightness_limit=0.1, contrast_limit=0.1),
-        A.RGBShift(r_shift_limit=15, b_shift_limit=15, g_shift_limit=15),
-        A.RandomResizedCrop(70, 70, scale=(0.85, 1.0)),
-        A.Rotate(10),
-        ToTensorV2()
-    ])
+    if args.resize is None:
+        transform = A.Compose([
+            A.ColorJitter(hue=0.05),
+            A.HorizontalFlip(),
+            A.GaussNoise(var_limit=(5, 15)),
+            A.GridDistortion(),
+            A.MotionBlur(),
+            A.RandomBrightnessContrast(brightness_limit=0.1, contrast_limit=0.1),
+            A.RGBShift(r_shift_limit=15, b_shift_limit=15, g_shift_limit=15),
+            A.RandomResizedCrop(70, 70, scale=(0.85, 1.0)),
+            A.Rotate(10),
+            A.Normalize(),
+            ToTensorV2()
+        ])
+    else:
+        transform = A.Compose([
+            A.Resize(args.resize, args.resize),
+            A.ColorJitter(hue=0.05),
+            A.HorizontalFlip(),
+            A.GaussNoise(var_limit=(5, 15)),
+            A.GridDistortion(),
+            A.MotionBlur(),
+            A.RandomBrightnessContrast(brightness_limit=0.1, contrast_limit=0.1),
+            A.RGBShift(r_shift_limit=15, b_shift_limit=15, g_shift_limit=15),
+            A.RandomResizedCrop(args.resize, args.resize, scale=(0.85, 1.0)),
+            A.Rotate(10),
+            A.Normalize(),
+            ToTensorV2()
+        ])
 
     # im = data["images"][9879]
     # cv2.namedWindow("im", 2)
@@ -141,7 +157,7 @@ if __name__ == "__main__":
             input_labels = []
             for data_idx in range(idx, min(idx + batch_size, num_samples)):
                 data_sample = data["images"][indexes[data_idx]]
-                data_sample = transform(image=data_sample)["image"] / 255.0
+                data_sample = transform(image=data_sample)["image"]
                 label = data["labels"][indexes[data_idx], 0]
                 input_data.append(data_sample)
                 input_labels.append(label)
@@ -176,11 +192,18 @@ if __name__ == "__main__":
         val_loss = 0
         num_batches = 0
         acc = 0.0
+        input_data = []
+        input_labels = []
         for idx in range(0, num_val_samples, batch_size):
-            idx_max = min(idx + batch_size, num_val_samples)
-            data_samples = val_data["images"][idx:idx_max].swapaxes(3, 1) / 255.0
-            inputs = torch.tensor(data_samples, dtype=torch.float, device="cuda:0")
-            labels = torch.tensor(val_data["labels"][idx:idx_max, 0], dtype=torch.long, device="cuda:0")
+            for data_idx in range(idx, min(idx + batch_size, num_samples)):
+                data_sample = val_data["images"][data_idx]
+                data_sample = A.Compose([A.Normalize(), ToTensorV2()])(image=data_sample)["image"]
+                label = data["labels"][indexes[data_idx], 0]
+                input_data.append(data_sample)
+                input_labels.append(label)
+
+            inputs = torch.stack(input_data).to("cuda:0")
+            labels = torch.tensor(input_labels, dtype=torch.long, device="cuda:0")
 
             outputs = net(inputs)
             loss = criterion(outputs, labels)
