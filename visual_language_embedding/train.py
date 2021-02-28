@@ -137,8 +137,6 @@ if __name__ == "__main__":
         net.train()
 
         for idx in range(0, num_samples, batch_size):
-            batch_num += 1
-
             input_data = []
             input_labels = []
             for data_idx in range(idx, min(idx + batch_size, num_samples)):
@@ -170,6 +168,8 @@ if __name__ == "__main__":
                       (epoch + 1, idx + 1, running_loss / 10, running_acc / 10))
                 running_loss = 0.0
                 running_acc = 0.0
+
+            batch_num += 1
 
         # compute validation loss
         net.eval()
