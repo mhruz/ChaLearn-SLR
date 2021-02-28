@@ -116,6 +116,10 @@ if __name__ == "__main__":
             A.Normalize(),
             ToTensorV2()
         ])
+        val_transform = A.Compose([
+            A.Normalize(),
+            ToTensorV2()
+        ])
     else:
         transform = A.Compose([
             A.Resize(args.resize, args.resize),
@@ -128,6 +132,12 @@ if __name__ == "__main__":
             A.RGBShift(r_shift_limit=15, b_shift_limit=15, g_shift_limit=15),
             A.RandomResizedCrop(args.resize, args.resize, scale=(0.85, 1.0)),
             A.Rotate(10),
+            A.Normalize(),
+            ToTensorV2()
+        ])
+
+        val_transform = A.Compose([
+            A.Resize(args.resize, args.resize),
             A.Normalize(),
             ToTensorV2()
         ])
@@ -193,12 +203,12 @@ if __name__ == "__main__":
         val_loss = 0
         num_batches = 0
         acc = 0.0
-        input_data = []
-        input_labels = []
         for idx in range(0, num_val_samples, batch_size):
-            for data_idx in range(idx, min(idx + batch_size, num_samples)):
+            input_data = []
+            input_labels = []
+            for data_idx in range(idx, min(idx + batch_size, num_val_samples)):
                 data_sample = val_data["images"][data_idx]
-                data_sample = A.Compose([A.Normalize(), ToTensorV2()])(image=data_sample)["image"]
+                data_sample = val_transform(image=data_sample)["image"]
                 label = data["labels"][indexes[data_idx], 0]
                 input_data.append(data_sample)
                 input_labels.append(label)

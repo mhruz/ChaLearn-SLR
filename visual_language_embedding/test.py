@@ -19,6 +19,7 @@ if __name__ == "__main__":
     parser.add_argument('--max_epoch', type=int, help='number of max epochs', default=10)
     parser.add_argument('--batch_size', type=int, help='number data in one batch', default=32)
     parser.add_argument('--data_to_mem', type=bool, help='load data to memory')
+    parser.add_argument('--resize', type=int, help='resize images to this size')
     parser.add_argument('--device', type=int, help='device number', default=0)
     parser.add_argument('output', type=str, help='path to output')
     args = parser.parse_args()
@@ -53,17 +54,29 @@ if __name__ == "__main__":
     else:
         net.load_state_dict(torch.load(args.net))
 
+    if args.resize is None:
+        val_transform = A.Compose([
+            A.Normalize(),
+            ToTensorV2()
+        ])
+    else:
+        val_transform = A.Compose([
+            A.Resize(args.resize, args.resize),
+            A.Normalize(),
+            ToTensorV2()
+        ])
+
     # compute test acc
     net.eval()
     val_loss = 0
     num_batches = 0
     acc = 0.0
-    input_data = []
-    input_labels = []
     for idx in range(0, num_samples, batch_size):
+        input_data = []
+        input_labels = []
         for data_idx in range(idx, min(idx + batch_size, num_samples)):
             data_sample = data["images"][data_idx]
-            data_sample = A.Compose([A.Normalize(), ToTensorV2()])(image=data_sample)["image"]
+            data_sample = val_transform(image=data_sample)["image"]
             label = data["labels"][data_idx, 0]
             input_data.append(data_sample)
             input_labels.append(label)
