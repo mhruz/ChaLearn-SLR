@@ -11,12 +11,11 @@ from architecture import VLE_01
 
 if __name__ == "__main__":
     # parse commandline
-    parser = argparse.ArgumentParser(description='Train VLE on ChaLearn-SLR data.')
+    parser = argparse.ArgumentParser(description='Test VLE on ChaLearn-SLR data.')
     parser.add_argument('test_h5', type=str, help='path to dataset with testing hands')
     parser.add_argument('net', type=str, help='path to network you want to test ')
     parser.add_argument('model', type=str, help='resnet-18, mobilenet, vle')
     parser.add_argument('num_classes', type=int, help='number of classes')
-    parser.add_argument('--max_epoch', type=int, help='number of max epochs', default=10)
     parser.add_argument('--batch_size', type=int, help='number data in one batch', default=32)
     parser.add_argument('--data_to_mem', type=bool, help='load data to memory')
     parser.add_argument('--resize', type=int, help='resize images to this size')
@@ -49,10 +48,10 @@ if __name__ == "__main__":
     start_epoch = 0
 
     if args.net.endswith(".tar"):
-        checkpoint = torch.load(args.init_net)
+        checkpoint = torch.load(args.net, map_location="cuda:{}".format(args.device))
         net.load_state_dict(checkpoint["model_state_dict"])
     else:
-        net.load_state_dict(torch.load(args.net))
+        net.load_state_dict(torch.load(args.net), map_location="cuda:{}".format(args.device))
 
     if args.resize is None:
         val_transform = A.Compose([

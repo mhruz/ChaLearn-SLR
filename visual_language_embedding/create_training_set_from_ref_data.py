@@ -18,12 +18,16 @@ if __name__ == "__main__":
     hand_pose_classes = [x for x in hand_pose_classes if
                          not x.startswith("_") and os.path.isdir(os.path.join(args.hand_clusters, x))]
 
+    string_dt = h5py.special_dtype(vlen=str)
+
     f_train_out = h5py.File(args.train_set, "w")
     f_train_out.create_dataset("images", (100, 70, 70, 3), maxshape=(None, 70, 70, 3), dtype=np.uint8)
     f_train_out.create_dataset("labels", (100, 1), maxshape=(None, 1), dtype=np.int)
+    f_train_out.create_dataset("label_names", data=hand_pose_classes, dtype=string_dt)
     f_val_out = h5py.File(args.val_set, "w")
     f_val_out.create_dataset("images", (100, 70, 70, 3), maxshape=(None, 70, 70, 3), dtype=np.uint8)
     f_val_out.create_dataset("labels", (100, 1), maxshape=(None, 1), dtype=np.int)
+    f_val_out.create_dataset("label_names", data=hand_pose_classes, dtype=string_dt)
 
     train_data_len = 0
     val_data_len = 0

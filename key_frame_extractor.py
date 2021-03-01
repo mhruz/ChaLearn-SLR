@@ -74,4 +74,8 @@ if __name__ == "__main__":
 
             cv2.destroyAllWindows()
 
+    # data = {}
+    # for sample in f_out:
+    #     data[sample] = f_out[sample][:]
+
     f_out.close()
