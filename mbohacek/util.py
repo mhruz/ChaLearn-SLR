@@ -1,4 +1,5 @@
 
+import cv2
 import torch
 
 from mbohacek.location_area_checks import *
@@ -28,3 +29,19 @@ def area_dictionary_to_tensor(d: dict):
 
     # Convert to Torch Tensor
     return torch.as_tensor(tensor_values)
+
+
+def get_frames_from_video(path):
+    output = []
+    cap = cv2.VideoCapture(path)
+
+    while cap.isOpened():
+        read, frame = cap.read()
+        if not read:
+            break
+
+        output.append(frame)
+
+    cap.release()
+
+    return output

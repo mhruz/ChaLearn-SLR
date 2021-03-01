@@ -26,8 +26,9 @@ class ChaLearnDataManager:
 
         self.keypoints_data_file = h5py.File(keypoints_data_file_path, "r")
 
-        self.labels_info_df = pd.read_csv(labels_info_df_path, encoding="utf-8", sep=" ", header=None)
-        self.labels_info_df.columns = ["img_file", "vid_file", "frame_index", "label", "signer"]
+        if labels_info_df_path:
+            self.labels_info_df = pd.read_csv(labels_info_df_path, encoding="utf-8", sep=" ", header=None)
+            self.labels_info_df.columns = ["img_file", "vid_file", "frame_index", "label", "signer"]
 
         self.ssh_enabled = enable_ssh
         self.img_path_store = img_path_store
