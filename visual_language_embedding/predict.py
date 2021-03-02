@@ -2,12 +2,21 @@ import argparse
 import h5py
 import torchvision.models as models
 import torch.nn as nn
+from torch.nn import functional
 import torch
 import os
 import cv2
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import numpy as np
+
+embedding_vectors = []
+
+
+def embedding_hook(module, input):
+    global embedding_vectors
+    embedding_vectors = input
+
 
 if __name__ == "__main__":
     # parse commandline
@@ -52,6 +61,7 @@ if __name__ == "__main__":
         # replace classification layer
         net.classifier[1] = nn.Linear(1280, args.num_classes)
         embedding_dim = 1280
+        net.classifier[1].register_forward_pre_hook(embedding_hook)
 
     # net = VLE_01(65)
     net.cuda(device="cuda:{}".format(args.device))
@@ -89,14 +99,21 @@ if __name__ == "__main__":
         for sample in f_hand_crops:
             group_left = f_out.create_group("{}/left_hand".format(sample))
             group_right = f_out.create_group("{}/right_hand".format(sample))
-            group_left.create_dataset("frames", shape=f_hand_crops[sample]["left_hand"]["frames"].shape, dtype=np.int)
-            group_left.create_dataset("embedding",
-                                      shape=(len(f_hand_crops[sample]["left_hand"]["frames"]), embedding_dim),
-                                      dtype=np.float)
-            # save left hands
-            for i, (frame, hand) in enumerate(zip(f_hand_crops[sample]["left_hand"]["frames"],
-                                   f_hand_crops[sample]["left_hand"]["images"])):
 
+            group_left.create_dataset("frames", shape=f_hand_crops[sample]["left_hand"]["frames"].shape, dtype=np.int,
+                                      chunks=True)
+            group_left.create_dataset("embeddings",
+                                      shape=(len(f_hand_crops[sample]["left_hand"]["frames"]), embedding_dim),
+                                      dtype=np.float, chunks=True)
+            group_right.create_dataset("frames", shape=f_hand_crops[sample]["right_hand"]["frames"].shape, dtype=np.int,
+                                       chunks=True)
+            group_right.create_dataset("embeddings",
+                                       shape=(len(f_hand_crops[sample]["right_hand"]["frames"]), embedding_dim),
+                                       dtype=np.float, chunks=True)
+            # save left hands
+            data_idx = 0
+            for i, (frame, hand) in enumerate(zip(f_hand_crops[sample]["left_hand"]["frames"],
+                                                  f_hand_crops[sample]["left_hand"]["images"])):
                 # check OpenPose min confidence
                 if args.open_pose_h5 is not None:
                     target_joints = f_joints[sample][frame]
@@ -110,8 +127,9 @@ if __name__ == "__main__":
                     data_sample = val_transform(image=hand)["image"]
                     input_data.append(data_sample)
                     batch_groups.append(group_left)
-                    batch_indexes.append(i)
+                    batch_indexes.append(data_idx)
                     batch_frames.append(frame)
+                    data_idx += 1
 
                     continue
 
@@ -124,8 +142,12 @@ if __name__ == "__main__":
                 num_batches += 1
 
                 # save data to h5
-                for idx, frame_number, group, output in zip(batch_indexes, batch_frames, batch_groups, outputs):
+                for idx, frame_number, group, embedding in zip(batch_indexes, batch_frames, batch_groups,
+                                                               embedding_vectors[0].cpu().detach().numpy()):
                     group["frames"][idx] = frame_number
-                    group["embedding"][idx] = output.cpu().numpy()
+                    group["embeddings"][idx] = embedding
+
+            group_left["frames"].resize((data_idx, ))
+            group_left["embeddings"].resize((data_idx, embedding_dim))
 
     print("Test acc: {}".format(acc / num_samples))
