@@ -117,7 +117,7 @@ if __name__ == "__main__":
             if args.open_pose_h5 is not None:
                 target_joints = f_joints[sample][frame]
                 target_joints = np.reshape(target_joints, (-1, 3))
-                mlh = np.mean(target_joints[8:29, 2])
+                mlh = np.mean(target_joints[8:29, 2]).item()
                 # low Open Pose confidence
                 if mlh < args.min_conf:
                     continue
@@ -159,7 +159,7 @@ if __name__ == "__main__":
             if args.open_pose_h5 is not None:
                 target_joints = f_joints[sample][frame]
                 target_joints = np.reshape(target_joints, (-1, 3))
-                mrh = np.mean(target_joints[29:50, 2])
+                mrh = np.mean(target_joints[29:50, 2]).item()
                 # low Open Pose confidence
                 if mrh < args.min_conf:
                     continue
