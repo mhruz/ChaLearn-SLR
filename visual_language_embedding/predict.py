@@ -95,109 +95,118 @@ if __name__ == "__main__":
     batch_frames = []
     batch_full = False
 
-    while True:
-        for sample in f_hand_crops:
-            group_left = f_out.create_group("{}/left_hand".format(sample))
-            group_right = f_out.create_group("{}/right_hand".format(sample))
+    for sample in f_hand_crops:
+        group_left = f_out.create_group("{}/left_hand".format(sample))
+        group_right = f_out.create_group("{}/right_hand".format(sample))
 
-            group_left.create_dataset("frames", shape=f_hand_crops[sample]["left_hand"]["frames"].shape, dtype=np.int,
-                                      chunks=True)
-            group_left.create_dataset("embeddings",
-                                      shape=(len(f_hand_crops[sample]["left_hand"]["frames"]), embedding_dim),
-                                      dtype=np.float, chunks=True)
-            group_right.create_dataset("frames", shape=f_hand_crops[sample]["right_hand"]["frames"].shape, dtype=np.int,
-                                       chunks=True)
-            group_right.create_dataset("embeddings",
-                                       shape=(len(f_hand_crops[sample]["right_hand"]["frames"]), embedding_dim),
-                                       dtype=np.float, chunks=True)
-            # save left hands
-            data_idx_left = 0
-            for i, (frame, hand) in enumerate(zip(f_hand_crops[sample]["left_hand"]["frames"],
-                                                  f_hand_crops[sample]["left_hand"]["images"])):
-                # check OpenPose min confidence
-                if args.open_pose_h5 is not None:
-                    target_joints = f_joints[sample][frame]
-                    target_joints = np.reshape(target_joints, (-1, 3))
-                    mlh = np.mean(target_joints[8:29, 2])
-                    # low Open Pose confidence
-                    if mlh < args.min_conf:
-                        continue
-
-                if len(input_data) < batch_size:
-                    data_sample = val_transform(image=hand)["image"]
-                    input_data.append(data_sample)
-                    batch_groups.append(group_left)
-                    batch_indexes.append(data_idx_left)
-                    batch_frames.append(frame)
-                    data_idx_left += 1
-
+        group_left.create_dataset("frames", shape=f_hand_crops[sample]["left_hand"]["frames"].shape, dtype=np.int,
+                                  chunks=True)
+        group_left.create_dataset("embeddings",
+                                  shape=(len(f_hand_crops[sample]["left_hand"]["frames"]), embedding_dim),
+                                  dtype=np.float, chunks=True)
+        group_right.create_dataset("frames", shape=f_hand_crops[sample]["right_hand"]["frames"].shape, dtype=np.int,
+                                   chunks=True)
+        group_right.create_dataset("embeddings",
+                                   shape=(len(f_hand_crops[sample]["right_hand"]["frames"]), embedding_dim),
+                                   dtype=np.float, chunks=True)
+        # save left hands
+        data_idx_left = 0
+        for i, (frame, hand) in enumerate(zip(f_hand_crops[sample]["left_hand"]["frames"],
+                                              f_hand_crops[sample]["left_hand"]["images"])):
+            # check OpenPose min confidence
+            if args.open_pose_h5 is not None:
+                target_joints = f_joints[sample][frame]
+                target_joints = np.reshape(target_joints, (-1, 3))
+                mlh = np.mean(target_joints[8:29, 2])
+                # low Open Pose confidence
+                if mlh < args.min_conf:
                     continue
 
-                batch_full = True
+            data_sample = val_transform(image=hand)["image"]
+            input_data.append(data_sample)
+            batch_groups.append(group_left)
+            batch_indexes.append(data_idx_left)
+            batch_frames.append(frame)
+            data_idx_left += 1
 
-                inputs = torch.stack(input_data).to("cuda:{}".format(args.device))
+            if len(input_data) < batch_size:
+                continue
 
-                outputs = net(inputs)
+            batch_full = True
 
-                num_batches += 1
+            inputs = torch.stack(input_data).to("cuda:{}".format(args.device))
 
-                # save data to h5
-                for idx, frame_number, group, embedding in zip(batch_indexes, batch_frames, batch_groups,
-                                                               embedding_vectors[0].cpu().detach().numpy()):
-                    group["frames"][idx] = frame_number
-                    group["embeddings"][idx] = embedding
+            outputs = net(inputs)
 
-                input_data = []
-                batch_groups = []
-                batch_indexes = []
-                batch_frames = []
+            num_batches += 1
 
-            # save right hands
-            data_idx_right = 0
-            for i, (frame, hand) in enumerate(zip(f_hand_crops[sample]["right_hand"]["frames"],
-                                                  f_hand_crops[sample]["right_hand"]["images"])):
-                # check OpenPose min confidence
-                if args.open_pose_h5 is not None:
-                    target_joints = f_joints[sample][frame]
-                    target_joints = np.reshape(target_joints, (-1, 3))
-                    mrh = np.mean(target_joints[29:50, 2])
-                    # low Open Pose confidence
-                    if mrh < args.min_conf:
-                        continue
+            # save data to h5
+            for idx, frame_number, group, embedding in zip(batch_indexes, batch_frames, batch_groups,
+                                                           embedding_vectors[0].cpu().detach().numpy()):
+                group["frames"][idx] = frame_number
+                group["embeddings"][idx] = embedding
 
-                if len(input_data) < batch_size:
-                    data_sample = val_transform(image=hand)["image"]
-                    input_data.append(data_sample)
-                    batch_groups.append(group_right)
-                    batch_indexes.append(data_idx_right)
-                    batch_frames.append(frame)
-                    data_idx_right += 1
+            input_data = []
+            batch_groups = []
+            batch_indexes = []
+            batch_frames = []
 
+        # save right hands
+        data_idx_right = 0
+        for i, (frame, hand) in enumerate(zip(f_hand_crops[sample]["right_hand"]["frames"],
+                                              f_hand_crops[sample]["right_hand"]["images"])):
+            # check OpenPose min confidence
+            if args.open_pose_h5 is not None:
+                target_joints = f_joints[sample][frame]
+                target_joints = np.reshape(target_joints, (-1, 3))
+                mrh = np.mean(target_joints[29:50, 2])
+                # low Open Pose confidence
+                if mrh < args.min_conf:
                     continue
 
-                batch_full = True
+            data_sample = val_transform(image=hand)["image"]
+            input_data.append(data_sample)
+            batch_groups.append(group_right)
+            batch_indexes.append(data_idx_right)
+            batch_frames.append(frame)
+            data_idx_right += 1
 
-                inputs = torch.stack(input_data).to("cuda:{}".format(args.device))
+            if len(input_data) < batch_size:
+                continue
 
-                outputs = net(inputs)
+            batch_full = True
 
-                num_batches += 1
+            inputs = torch.stack(input_data).to("cuda:{}".format(args.device))
 
-                # save data to h5
-                for idx, frame_number, group, embedding in zip(batch_indexes, batch_frames, batch_groups,
-                                                               embedding_vectors[0].cpu().detach().numpy()):
-                    group["frames"][idx] = frame_number
-                    group["embeddings"][idx] = embedding
+            outputs = net(inputs)
 
-                input_data = []
-                batch_groups = []
-                batch_indexes = []
-                batch_frames = []
+            num_batches += 1
 
-            group_left["frames"].resize((data_idx_left, ))
-            group_left["embeddings"].resize((data_idx_left, embedding_dim))
-            group_right["frames"].resize((data_idx_right,))
-            group_right["embeddings"].resize((data_idx_right, embedding_dim))
+            # save data to h5
+            for idx, frame_number, group, embedding in zip(batch_indexes, batch_frames, batch_groups,
+                                                           embedding_vectors[0].cpu().detach().numpy()):
+                group["frames"][idx] = frame_number
+                group["embeddings"][idx] = embedding
 
-        # chcek whether last data were processed
-        if not batch_full:
+            input_data = []
+            batch_groups = []
+            batch_indexes = []
+            batch_frames = []
+
+        group_left["frames"].resize((data_idx_left, ))
+        group_left["embeddings"].resize((data_idx_left, embedding_dim))
+        group_right["frames"].resize((data_idx_right,))
+        group_right["embeddings"].resize((data_idx_right, embedding_dim))
+
+    # check whether last data were processed
+    if not batch_full:
+        inputs = torch.stack(input_data).to("cuda:{}".format(args.device))
+        outputs = net(inputs)
+
+        # save data to h5
+        for idx, frame_number, group, embedding in zip(batch_indexes, batch_frames, batch_groups,
+                                                       embedding_vectors[0].cpu().detach().numpy()):
+            group["frames"][idx] = frame_number
+            group["embeddings"][idx] = embedding
+
+    f_out.close()
