@@ -30,7 +30,7 @@ if __name__ == "__main__":
     parser.add_argument('--data_to_mem', type=bool, help='load data to memory')
     parser.add_argument('--resize', type=int, help='resize images to this size')
     parser.add_argument('--device', type=int, help='device number', default=0)
-    parser.add_argument('--min_conf', type=str, help='predict only hand-shapes with OpenPose confidence > min_conf',
+    parser.add_argument('--min_conf', type=float, help='predict only hand-shapes with OpenPose confidence > min_conf',
                         default=0.4)
     parser.add_argument('--open_pose_h5', type=str, help='OpenPose predictions')
     parser.add_argument('--joints_to_mem', type=bool, help='read joints data to memory')
