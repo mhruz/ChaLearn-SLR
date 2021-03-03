@@ -89,11 +89,15 @@ if __name__ == "__main__":
     net.eval()
 
     num_batches = 0
+    data_idx_left = 0
+    data_idx_right = 0
     input_data = []
     batch_groups = []
     batch_indexes = []
     batch_frames = []
     batch_full = False
+    group_left = None
+    group_right = None
 
     for sample in f_hand_crops:
         group_left = f_out.create_group("{}/left_hand".format(sample))
@@ -208,5 +212,10 @@ if __name__ == "__main__":
                                                        embedding_vectors[0].cpu().detach().numpy()):
             group["frames"][idx] = frame_number
             group["embeddings"][idx] = embedding
+
+        group_left["frames"].resize((data_idx_left,))
+        group_left["embeddings"].resize((data_idx_left, embedding_dim))
+        group_right["frames"].resize((data_idx_right,))
+        group_right["embeddings"].resize((data_idx_right, embedding_dim))
 
     f_out.close()
