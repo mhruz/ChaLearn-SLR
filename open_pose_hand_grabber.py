@@ -19,18 +19,14 @@ def get_right_hand(im, joints, border=0.2, square=False):
     joints = np.reshape(joints, (-1, 3))
     right_hand_joints = joints[29:50]
 
-    hand_image, m = get_sub_image(im, right_hand_joints, border, square)
-
-    return hand_image, m
+    return get_sub_image(im, right_hand_joints, border, square)
 
 
 def get_left_hand(im, joints, border=0.2, square=False):
     joints = np.reshape(joints, (-1, 3))
     left_hand_joints = joints[8:29]
 
-    hand_image, m = get_sub_image(im, left_hand_joints, border, square)
-
-    return hand_image, m
+    return get_sub_image(im, left_hand_joints, border, square)
 
 
 def get_sub_image(im, joints, border=0.2, square=False):
@@ -100,7 +96,13 @@ def get_sub_image(im, joints, border=0.2, square=False):
     conf = joints[:, 2]
     mean = np.mean(conf)
 
-    return sub_image, mean
+    bbox = [x0, y0, x1, y1]
+    bbox[0] /= im.shape[1]
+    bbox[1] /= im.shape[0]
+    bbox[2] /= im.shape[1]
+    bbox[3] /= im.shape[0]
+
+    return sub_image, mean, bbox
 
 
 if __name__ == "__main__":
@@ -126,6 +128,8 @@ if __name__ == "__main__":
     right_hand_frame = 0
     left_hands_frames = None
     right_hands_frames = None
+    right_hand_boxes = None
+    left_hand_boxes = None
     f = None
 
     stats = {}
@@ -167,11 +171,15 @@ if __name__ == "__main__":
                   " of video and OpenPose joints ({}/{})".format(number_of_frames, number_of_joint_frames))
 
         if args.out_h5 is not None:
+            # create full size dataset, it will be croped when saving to h5
             left_hands = np.zeros((number_of_joint_frames, args.out_size, args.out_size, 3), dtype=np.uint8)
             right_hands = np.zeros((number_of_joint_frames, args.out_size, args.out_size, 3), dtype=np.uint8)
 
             left_hands_frames = []
             right_hands_frames = []
+
+            left_hand_boxes = []
+            right_hand_boxes = []
 
             left_hand_frame = 0
             right_hand_frame = 0
@@ -193,9 +201,9 @@ if __name__ == "__main__":
                 if not ret:
                     break
                 # get the right hand image
-                right_hand_image, mrh = get_right_hand(im, joints, square=True)
+                right_hand_image, mrh, bbox_rh = get_right_hand(im, joints, square=True)
                 # get the left hand image
-                left_hand_image, mlh = get_left_hand(im, joints, square=True)
+                left_hand_image, mlh, bbox_lh = get_left_hand(im, joints, square=True)
             else:
                 joints = np.reshape(joints, (-1, 3))
                 mrh = np.mean(joints[29:50, 2])
@@ -211,12 +219,14 @@ if __name__ == "__main__":
                     right_hands[right_hand_frame] = right_hand_image
                     right_hand_frame += 1
                     right_hands_frames.append(frame)
+                    right_hand_boxes.append(bbox_rh)
 
                 if mlh >= args.threshold:
                     left_hand_image = cv2.resize(left_hand_image, (args.out_size, args.out_size))
                     left_hands[left_hand_frame] = left_hand_image
                     left_hand_frame += 1
                     left_hands_frames.append(frame)
+                    left_hand_boxes.append(bbox_lh)
 
             if args.visualize:
                 cv2.imshow("left hand", left_hand_image)
@@ -224,7 +234,7 @@ if __name__ == "__main__":
 
                 print("Left hand image size: {}".format(left_hand_image.shape))
                 print("Right hand image size: {}".format(right_hand_image.shape))
-                print("Left Hand conf: mean {}, sum {}\nRight Hand conf: mean {}, sum {}".format(mlh, mrh))
+                print("Left Hand conf: mean {}\nRight Hand conf: mean {}".format(mlh, mrh))
 
                 cv2.imshow("image", im)
                 key = cv2.waitKey(pause)
@@ -253,11 +263,16 @@ if __name__ == "__main__":
                                                     dtype=np.uint8, data=left_hands[:left_hand_frame])
             f[video_fn]["left_hand"].create_dataset("frames", shape=(left_hand_frame,), dtype=np.int,
                                                     data=left_hands_frames)
+            f[video_fn]["left_hand"].create_dataset("bboxes", shape=(left_hand_frame, 4), dtype=np.float,
+                                                    data=left_hand_boxes)
+
             f[video_fn]["right_hand"].create_dataset("images",
                                                      shape=(right_hand_frame, args.out_size, args.out_size, 3),
                                                      dtype=np.uint8, data=right_hands[:right_hand_frame])
             f[video_fn]["right_hand"].create_dataset("frames", shape=(right_hand_frame,), dtype=np.int,
                                                      data=right_hands_frames)
+            f[video_fn]["right_hand"].create_dataset("bboxes", shape=(right_hand_frame, 4), dtype=np.float,
+                                                    data=right_hand_boxes)
 
             f.flush()
 
