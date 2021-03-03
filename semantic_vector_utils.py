@@ -20,12 +20,12 @@ def get_semantic_vector_location_vle(location_vectors, vle_data):
     else:
         known_right_hand = np.zeros((1, embedding_dim))
 
+    # set the location vectors (left_hand, right_hand)
+    output[:, 0:15] = location_vectors[:, 0, :]
+    output[:, 15:30] = location_vectors[:, 1, :]
+
     # iterate through the frames of the sample
     for frame in range(sample_length):
-        # set the location vectors (left_hand, right_hand)
-        output[frame, 0:15] = location_vectors[frame][0]
-        output[frame, 15:30] = location_vectors[frame][1]
-
         # set the embeddings
         if frame in vle_data["left_hand"]["frames"]:
             vle_index = np.where(vle_data["left_hand"]["frames"][:] == frame)[0]
