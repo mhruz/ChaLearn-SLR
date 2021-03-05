@@ -312,22 +312,28 @@ def get_semantic_vector_location_hand_crop(location_vectors, hand_crops, width=N
             hand_index = np.where(hand_crops["left_hand"]["frames"][:] == frame)[0][0]
             hand_image = normalize_hand_image(hand_crops["left_hand"]["images"][hand_index], width)
 
+            # AUGMENTATION HERE
+
             output[output_idx, 30:30 + crop_dim] = hand_image.flatten()
 
             known_left_hand = hand_image
         # if the current frame is not present in the embeddings data, use the last known embedding
         else:
+            # AUGMENTATION HERE
             output[output_idx, 30:30 + crop_dim] = known_left_hand.flatten()
 
         if frame in hand_crops["right_hand"]["frames"]:
             hand_index = np.where(hand_crops["right_hand"]["frames"][:] == frame)[0][0]
             hand_image = normalize_hand_image(hand_crops["right_hand"]["images"][hand_index], width)
 
+            # AUGMENTATION HERE
+
             output[output_idx, 30 + crop_dim:30 + 2 * crop_dim] = hand_image.flatten()
 
             known_right_hand = hand_image
             # if the current frame is not present in the embeddings data, use the last known embedding
         else:
+            # AUGMENTATION HERE
             output[output_idx, 30 + crop_dim:30 + 2 * crop_dim] = known_right_hand.flatten()
 
         output_idx += 1
@@ -396,10 +402,13 @@ def get_semantic_vector_location_hand_crop_keyframes(location_vectors, hand_crop
             known_left_hand = hand_image
 
             if frame in keyframes[:]:
+                # AUGMENTATION HERE
+
                 output[output_idx, 30:30 + crop_dim] = hand_image.flatten()
 
         # if the current frame is not present in the embeddings data, use the last known embedding
-        else:
+        elif frame in keyframes[:]:
+            # AUGMENTATION HERE
             output[output_idx, 30:30 + crop_dim] = known_left_hand.flatten()
 
         if frame in hand_crops["right_hand"]["frames"]:
@@ -408,10 +417,13 @@ def get_semantic_vector_location_hand_crop_keyframes(location_vectors, hand_crop
             known_right_hand = hand_image
 
             if frame in keyframes[:]:
+                # AUGMENTATION HERE
+
                 output[output_idx, 30 + crop_dim:30 + 2 * crop_dim] = hand_image.flatten()
 
             # if the current frame is not present in the embeddings data, use the last known embedding
-        else:
+        elif frame in keyframes[:]:
+            # AUGMENTATION HERE
             output[output_idx, 30 + crop_dim:30 + 2 * crop_dim] = known_right_hand.flatten()
 
         if frame in keyframes[:]:
