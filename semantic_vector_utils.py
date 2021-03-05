@@ -252,7 +252,7 @@ def normalize_hand_image(image, width):
     if hand_image.shape[1] != width:
         hand_image = cv2.resize(hand_image, (width, width))
 
-    return hand_image
+    return hand_image / 255.0
 
 
 def get_semantic_vector_location_hand_crop(location_vectors, hand_crops, width=None):
@@ -474,10 +474,10 @@ if __name__ == "__main__":
 
     # sample = "signer1_sample1_color"
     sample = "signer35_sample9_color"
-    # data = get_semantic_vector_location_vle_v2(loc_vectors_data[sample], vle_data[sample])
-    # data2 = get_semantic_vector_location_vle_keyframes_v2(loc_vectors_data[sample], vle_data[sample],
-    #                                                       keyframes_data[sample])
-    # data3 = get_semantic_vector_location_hand_crop(loc_vectors_data[sample], hand_crops_data[sample], 32)
+    data = get_semantic_vector_location_vle_v2(loc_vectors_data[sample], vle_data[sample])
+    data2 = get_semantic_vector_location_vle_keyframes_v2(loc_vectors_data[sample], vle_data[sample],
+                                                          keyframes_data[sample])
+    data3 = get_semantic_vector_location_hand_crop(loc_vectors_data[sample], hand_crops_data[sample], 32)
     data4 = get_semantic_vector_location_hand_crop_keyframes(loc_vectors_data[sample], hand_crops_data[sample],
                                                              keyframes[sample], 10)
 
