@@ -13,8 +13,6 @@ parser.add_argument("--images_directory", type=str, default="img_transfered", he
                     "images of the individul frames")
 parser.add_argument("--video_directory", type=str, default="vid", help="Path to the directory with the videos of the "
                     "sign samples")
-parser.add_argument("--processing_type", type=str, choices=["img", "vid"], default="vid", help="Determines whether the"
-                    " annotations should be made on top of preprocessed and divided frames images or complete videos")
 parser.add_argument("--keypoints_datafile", type=str, default="/Users/matyasbohacek/Documents/Academics/Materials/CVPR SLR ChaLearn/Data/val_json_keypoints-raw.h5",
                     help="Path to the HDF5 file with the body pose landmarks from OpenPose for all the sign instances")
 parser.add_argument("--labels_info_path", type=str, default="/Users/matyasbohacek/Documents/Academics/Materials/CVPR SLR ChaLearn/Data/train_labels_val.csv",
@@ -28,9 +26,18 @@ parser.add_argument("--logging", type=str, choices=["normal", "full"], default="
                     " is logged during the annotation.")
 
 args = parser.parse_args()
+processing_type = ""
+
+# Determine the processing type
+if (args.images_directory and args.video_directory) or (not args.images_directory and not args.video_directory):
+    logging.error("Only either `args.images_directory` or `args.video_directory` need to be specified.")
+elif args.images_directory:
+    processing_type = "img"
+else:
+    processing_type = "vid"
 
 # MARK: Properies
-if args.processing_type == "img":
+if processing_type == "img":
     chalearn_data_manager = ChaLearnDataManager(args.keypoints_datafile, args.labels_info_path, args.download,
                                                 args.images_directory)
 else:
@@ -39,7 +46,7 @@ else:
 output_datafile = h5py.File(args.output_file, 'w')
 print("Successfully loaded all of the supporting files.")
 
-if args.processing_type == "img":
+if processing_type == "img":
     # Group the instances by the individual videos for image processing
     grouped_sign_vid_instances = chalearn_data_manager.labels_info_df.groupby(chalearn_data_manager.labels_info_df.vid_file)
     num_instances = grouped_sign_vid_instances.ngroups
@@ -63,7 +70,7 @@ for sign_sample_id, group_subdf in grouped_sign_vid_instances:
 
     iterator = None
 
-    if args.processing_type == "img":
+    if processing_type == "img":
         # Reset the indexing of the group to discard the original full-dataframe order
         group_subdf = group_subdf.reset_index()
         iterator = group_subdf.iterrows()
@@ -82,7 +89,7 @@ for sign_sample_id, group_subdf in grouped_sign_vid_instances:
         print("\tCurrently annotating `" + sign_sample_id + "`. Found " + str(num_frames) + " frames.")
 
     for row_index, row in iterator:
-        if args.processing_type == "img":
+        if processing_type == "img":
             file_name = row["img_file"]
             local_file_name = os.path.join(args.images_directory, file_name)
 
