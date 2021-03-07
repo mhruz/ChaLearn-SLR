@@ -7,15 +7,13 @@ from mbohacek.location_analysis import *
 # Arguments
 parser = argparse.ArgumentParser("Hand Location Analysis: Annotations Script", add_help=False)
 
-parser.add_argument("--images_directory", type=str, default="img_transfered", help="Path to the directory with the "
-                                                                                   "images of the individul frames")
-parser.add_argument("--video_directory", type=str, default="vid", help="Path to the directory with the videos of the "
-                                                                       "sign samples")
+parser.add_argument("--images_directory", type=str, help="Path to the directory with the "
+                                                         "images of the individul frames")
+parser.add_argument("--video_directory", type=str, help="Path to the directory with the videos of the "
+                                                        "sign samples")
 parser.add_argument("--keypoints_datafile", type=str,
-                    default="/Users/matyasbohacek/Documents/Academics/Materials/CVPR SLR ChaLearn/Data/val_json_keypoints-raw.h5",
                     help="Path to the HDF5 file with the body pose landmarks from OpenPose for all the sign instances")
 parser.add_argument("--labels_info_path", type=str,
-                    default="/Users/matyasbohacek/Documents/Academics/Materials/CVPR SLR ChaLearn/Data/train_labels_val.csv",
                     help="Path to the CSV table with the properties of all the sign instances and corresponding frames")
 parser.add_argument("--output_file", type=str, default="out.h5", help="Path to the HDF5 file into which the arrays with"
                                                                       " the soft vectors for each sign video sample will written.")
