@@ -52,7 +52,7 @@ if processing_type == "img":
     num_instances = grouped_sign_vid_instances.ngroups
 else:
     # Load the standalone annotations for video processing
-    samples_df = pd.read_csv(args.labels_info_path, encoding="utf-8", sep=" ", header=None)
+    samples_df = pd.read_csv(args.labels_info_path, encoding="utf-8", sep=",", header=None)
     samples_df.columns = ["vid_file", "label"]
 
     # Wrap the video names temporarily into a tuple list to satisfy the for loop
