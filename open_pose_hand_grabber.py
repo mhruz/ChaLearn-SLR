@@ -138,10 +138,10 @@ if __name__ == "__main__":
         f = h5py.File(args.out_h5, "w")
 
     if args.out_stat_dir is not None:
-        if args.video_to_class_csv is None:
-            print("When using stat dir you need to specify the --video_to_class_csv arg.")
-
-        f_video_to_class = csv.reader(open(args.video_to_class_csv, "r"))
+        # if args.video_to_class_csv is None:
+        #     print("When using stat dir you need to specify the --video_to_class_csv arg.")
+        #
+        # f_video_to_class = csv.reader(open(args.video_to_class_csv, "r"))
         os.makedirs(args.out_stat_dir, exist_ok=True)
 
     joints_h5 = h5py.File(args.open_pose_h5, "r")
