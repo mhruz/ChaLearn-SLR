@@ -312,7 +312,7 @@ if __name__ == "__main__":
             ax2.set_xlim(0, 1)
             ax2.set_ylim(0, 1)
             fig.savefig(os.path.join(args.out_stat_dir, "{}.png".format(speaker)))
-            fig.close()
+            plt.close(fig)
 
         f_stats = h5py.File(os.path.join(args.out_stat_dir, "stats.h5"), "w")
         f_stats.create_group(speaker)
