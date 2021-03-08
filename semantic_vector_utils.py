@@ -364,13 +364,13 @@ def get_semantic_vector_location_hand_crop_keyframes(location_vectors, hand_crop
         hand_image = normalize_hand_image(hand_crops["left_hand"]["images"][0], width)
         known_left_hand = hand_image
     else:
-        known_left_hand = np.zeros((1, width))
+        known_left_hand = np.zeros((1, crop_dim))
 
     if len(hand_crops["right_hand"]["images"]) > 0:
         hand_image = normalize_hand_image(hand_crops["right_hand"]["images"][0], width)
         known_right_hand = hand_image
     else:
-        known_right_hand = np.zeros((1, width))
+        known_right_hand = np.zeros((1, crop_dim))
 
     if len(location_vectors["vector"]) > 0:
         known_loc_vector = location_vectors["vector"][0]
