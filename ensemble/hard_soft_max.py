@@ -16,6 +16,10 @@ predicted_csv = ['crop.csv', 'crop_new.csv', 'mask.csv', 'keyframe_mask.csv', 'k
                  'keyframe_mask_new.csv', 'openpose_41b.csv',
                  'vle_4.csv', 'vle_3.csv']
 
+confusion_matrices = {}
+for model in predicted_csv:
+    confusion_matrices[model] = np.load("confusion_matrix_{}.npy".format(model))
+
 print(predicted_csv)
 predicts = {}
 
@@ -28,6 +32,7 @@ for pcsv in predicted_csv:
 for i, model in enumerate(predicts):
     preds = np.asarray(predicts[model])
     max_confs = np.max(preds, axis=1)
+    predicted_class = np.argmax(preds, axis=1)
     conf_thresh = max_confs * 0.5
 
     final_predictions[model] = np.zeros_like(preds)
@@ -36,11 +41,18 @@ for i, model in enumerate(predicts):
         preds[j, :] = preds[j, :] >= conf_thresh[j]
 
     preds = preds.astype(np.float32)
+
     final_predictions[model] = preds
+
+    # add from confusion matrix
+    for j, c in enumerate(final_predictions[model]):
+        confusion = confusion_matrices[model][predicted_class[j], :]
+        confusion[predicted_class[j]] = 0.0
+        c += 5 * confusion
 
 for model in final_predictions:
     x = pd.DataFrame(final_predictions[model])
-    x.to_csv("{}_hard_soft_max.csv".format(model), index=False)
+    x.to_csv("{}_hard_soft_max_v2.csv".format(model), index=False)
 
 
 final_decision = np.zeros_like(final_predictions["crop_new.csv"])

@@ -12,11 +12,15 @@ for i, gt in enumerate(ground_truth):
     gt_labels.append(gt.split(';')[-1][:-1])
 
 data_dir = r"e:\ZCU\JSALT2020\ensemble_fine"
-predicted_csv = ['crop.csv', 'crop_new.csv', 'mask.csv', 'keyframe_mask.csv', 'keyframe.csv', 'keyframe_new.csv',
-                 'openpose_41b.csv', 'vle_4.csv', 'vle_3.csv', '1.csv', '2.csv', '3.csv', '4.csv', '5.csv']
+# predicted_csv = ['crop.csv', 'crop_new.csv', 'mask.csv', 'keyframe_mask.csv', 'keyframe.csv', 'keyframe_new.csv',
+#                  'openpose_41b.csv', 'vle_4.csv', 'vle_3.csv', '1.csv', '2.csv', '3.csv', '4.csv', '5.csv']
 
-predicted_csv = ['crop_new.csv', 'keyframe_new.csv', 'mask_new.csv', 'keyframe_mask_new.csv', 'openpose_41b.csv',
-                 'vle_3.csv']
+# predicted_csv = ['crop_new.csv', 'keyframe_new.csv', 'mask_new.csv', 'keyframe_mask_new.csv', 'openpose_41b.csv',
+#                  'vle_3.csv']
+
+predicted_csv = ['crop.csv', 'crop_new.csv', 'mask.csv', 'keyframe_mask.csv', 'keyframe_new.csv', 'mask_new.csv',
+                 'keyframe_mask_new.csv', 'openpose_41b.csv',
+                 'vle_4.csv', 'vle_3.csv']
 
 print(predicted_csv)
 predicts = {}
