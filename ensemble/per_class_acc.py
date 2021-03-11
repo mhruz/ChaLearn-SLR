@@ -3,7 +3,6 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 
-
 with open(r'e:\ZCU\JSALT2020\ensemble_fine\test.txt') as txt_file:
     ground_truth = txt_file.readlines()
 
@@ -14,7 +13,10 @@ for i, gt in enumerate(ground_truth):
 
 data_dir = r"e:\ZCU\JSALT2020\ensemble_fine"
 predicted_csv = ['crop.csv', 'crop_new.csv', 'mask.csv', 'keyframe_mask.csv', 'keyframe.csv', 'keyframe_new.csv',
-                 'openpose_41b.csv', 'vle_4.csv', 'vle_3.csv']
+                 'openpose_41b.csv', 'vle_4.csv', 'vle_3.csv', '1.csv', '2.csv', '3.csv', '4.csv', '5.csv']
+
+predicted_csv = ['crop_new.csv', 'keyframe_new.csv', 'mask_new.csv', 'keyframe_mask_new.csv', 'openpose_41b.csv',
+                 'vle_3.csv']
 
 print(predicted_csv)
 predicts = {}
@@ -33,6 +35,13 @@ class_picker = np.zeros_like(model_picker)
 
 for i, model in enumerate(predicts):
     max_confs = np.argmax(np.asarray(predicts[model]), axis=1)
+    # aa = np.array(predicts[model])
+    #
+    # for k, v in enumerate(max_confs):
+    #     aa[k, v] = 0
+    #
+    # max_confs = np.argmax(aa, axis=1)
+
     class_picker[:, i] = np.max(np.asarray(predicts[model]), axis=1)
     for j, d in enumerate(gt_labels):
         d = int(d)
