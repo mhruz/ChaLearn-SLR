@@ -3,6 +3,44 @@ These codes generate the results for 2021 Looking at People Large Scale Signer I
 
 http://chalearnlap.cvc.uab.es/challenge/43/description/
 
+## Code Description
+
+### Data generation
+_open_pose_hand_grabber.py_ - Given videos and associated Open Pose joints locations, this script extracts hand regions and saves them as raw images into a HDF5 dataset.
+Only hands with confident hand joints detection are considered (>0.4).  
+
+**To generate the training hands:**
+
+`python open_pose_hand_grabber.py z:\korpusy_cv\AUTSL\train\ z:\korpusy_cv\AUTSL\train_json_keypoints-raw.h5 --out_h5 train_hand_images.h5`
+
+**To generate the validation hands:**
+
+`python open_pose_hand_grabber.py z:\korpusy_cv\AUTSL\val\ z:\korpusy_cv\AUTSL\val_json_keypoints-raw.h5 --out_h5 val_hand_images.h5`
+
+**To generate the test hands:**
+
+`python open_pose_hand_grabber.py z:\korpusy_cv\AUTSL\test\ z:\korpusy_cv\AUTSL\test_json_keypoints-raw.h5 --out_h5 test_hand_images.h5`
+
+**Structure of HDF5 dataset**
+
+dataset[video_filename]["left_hand"]["images"] - images of left hands from video_filename  
+dataset[video_filename]["left_hand"]["frames"] - numbers of frames of left hands from video_filename  
+dataset[video_filename]["left_hand"]["bboxes"] - bounding boxes of left hands from video_filename
+
+The same for "right_hand". Left and right hands are handled independently, thus they can originate from different frames. The genereated HDF5 file is large (>35GB).
+ 
+_hand_clustering_by_sign.py_ - Clusters hands by the Open Pose similarity. This script is used to find similar
+hand-poses in videos of the same sign. One sign can have several different important hand-poses, this script finds all of them. 
+
+`python hand_clustering_by_sign.py z:\korpusy_cv\AUTSL\train_json_keypoints-raw.h5 z:\korpusy_cv\AUTSL\train_labels.csv z:\cv\ChaLearnLAP\sign_hand_clusters_v03_02.h5`
+
+**Structure of HDF5 dataset**
+
+dataset[sign_class]["samples"] - video filenames (samples) of the given sign_class  
+dataset[sign_class]["frames"] - frames in which the important hand-pose was discovered (we consider only left hand - in many cases the dominant hand)
+
+_hand_clustering.py_ - Clusters hands by the Open Pose similarity.
+
 ## OpenPose joint indexes
 
 The locations are from the person's point of view (as caputured in video, must not reflect reality, if the video was mirrored).
