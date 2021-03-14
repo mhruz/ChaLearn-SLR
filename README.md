@@ -6,7 +6,8 @@ http://chalearnlap.cvc.uab.es/challenge/43/description/
 ## Code Description
 
 ### Data generation
-_open_pose_hand_grabber.py_ - Given videos and associated Open Pose joints locations, this script extracts hand regions and saves them as raw images into a HDF5 dataset.
+####_open_pose_hand_grabber.py_
+Given videos and associated Open Pose joints locations, this script extracts hand regions and saves them as raw images into a HDF5 dataset.
 Only hands with confident hand joints detection are considered (>0.4).  
 
 **To generate the training hands:**
@@ -29,7 +30,8 @@ dataset[video_filename]["left_hand"]["bboxes"] - bounding boxes of left hands fr
 
 The same for "right_hand". Left and right hands are handled independently, thus they can originate from different frames. The genereated HDF5 file is large (>35GB).
  
-_hand_clustering_by_sign.py_ - Clusters hands by the Open Pose similarity. This script is used to find similar
+####_hand_clustering_by_sign.py_
+Clusters hands by the Open Pose similarity. This script is used to find similar
 hand-poses in videos of the same sign. One sign can have several different important hand-poses, this script finds all of them. 
 
 `python hand_clustering_by_sign.py z:\korpusy_cv\AUTSL\train_json_keypoints-raw.h5 z:\korpusy_cv\AUTSL\train_labels.csv z:\cv\ChaLearnLAP\sign_hand_clusters_v03_02.h5`
@@ -39,7 +41,8 @@ hand-poses in videos of the same sign. One sign can have several different impor
 dataset[sign_class]["samples"] - video filenames (samples) of the given sign_class  
 dataset[sign_class]["frames"] - frames in which the important hand-pose was discovered (we consider only left hand - in many cases the dominant hand)
 
-_hand_clustering.py_ - Clusters hands by the Open Pose similarity.
+####_hand_clustering.py_ 
+Clusters hands by the Open Pose similarity.
 
 ## OpenPose joint indexes
 
