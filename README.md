@@ -6,7 +6,7 @@ http://chalearnlap.cvc.uab.es/challenge/43/description/
 ## Code Description
 
 ### Data generation
-####open_pose_hand_grabber.py
+#### open_pose_hand_grabber.py
 Given videos and associated Open Pose joints locations, this script extracts hand regions and saves them as raw images into a HDF5 dataset.
 Only hands with confident hand joints detection are considered (>0.4).  
 
@@ -30,7 +30,7 @@ dataset[video_filename]["left_hand"]["bboxes"] - bounding boxes of left hands fr
 
 The same for "right_hand". Left and right hands are handled independently, thus they can originate from different frames. The genereated HDF5 file is large (>35GB).
  
-####hand_clustering_by_sign.py
+#### hand_clustering_by_sign.py
 Clusters hands by the Open Pose similarity. This script is used to find similar
 hand-poses in videos of the same sign. One sign can have several different important hand-poses, this script finds all of them. 
 
@@ -41,7 +41,7 @@ hand-poses in videos of the same sign. One sign can have several different impor
 dataset[sign_class]["samples"] - video filenames (samples) of the given sign_class  
 dataset[sign_class]["frames"] - frames in which the important hand-pose was discovered (we consider only left hand - in many cases the dominant hand)
 
-####hand_clustering.py 
+#### hand_clustering.py 
 Clusters hands by the Open Pose similarity.
 
 ## OpenPose joint indexes
