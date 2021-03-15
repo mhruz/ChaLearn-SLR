@@ -71,6 +71,11 @@ not enough key-frames are detected.
 ### semantic_vector_utils.py
 Utilities for representing Visual Language Embeddings and Location Vectors.
 
+## Pre-trained models
+
+[Visual Language Embedding](https://drive.google.com/file/d/1hiU7HlZp9QexeVV2wrWo5OEBc53vcWCj/view?usp=sharing)
+
+
 
 ## OpenPose joint indexes
 
