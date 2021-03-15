@@ -1,10 +1,20 @@
 # Docker file instructions
 
-define data dir share data over all dockers, for example: 
+## Dockers
 
-'DATADIR="/home/dnn-user/data"'
+```
+sudo docker build --rm -t chalearn/openpose -f Dockerfile.data_prep .
+sudo docker build --rm -t chalearn/pytorch2 -f Dockerfile.pytorch_vle .
+sudo docker build --rm -t chalearn/pytorch -f Dockerfile.pytorch_i3d .
+sudo docker build --rm -t chalearn/chainer -f Dockerfile.transformer .
+```
 
 ## Data preparation
+
+Define data dir share data over all dockers, for example: 
+```
+DATADIR=/home/dnn-user/data
+```
 
 ### OpenPose and Crop data
 ```
