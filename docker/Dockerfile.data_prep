@@ -9,14 +9,8 @@ RUN pip3 install --upgrade pip
 #for python api
 RUN pip3 install h5py opencv-contrib-python-headless matplotlib
 
-#get neco z cureent adresare do dockeru na misto home
-#WORKDIR /home
-#COPY experiment experiment/
-
 WORKDIR /home/experiment
 RUN git clone https://github.com/mhruz/ChaLearn-SLR.git .
 
 #ENTRYPOINT ["ls"]
-CMD ./run_data_prep.sh
-
-
+CMD ./docker/run_data_prep.sh
