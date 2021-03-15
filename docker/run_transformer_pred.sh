@@ -3,6 +3,8 @@
 ################
 # ViT Transformers training
 
+mkdir -p /home/data/test_csv/
+
 ######
 #OPENPOSE
 
@@ -10,7 +12,7 @@
 #./transformer/run_train.sh
 ##pred
 ./transformer/run_pred.sh
-cp ./transformer/openpose_41b.csv /home/data/test_csv
+cp ./transformer/openpose_41b.csv /home/data/test_csv/
 
 ####
 #VLE
