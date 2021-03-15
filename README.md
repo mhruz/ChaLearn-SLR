@@ -43,7 +43,8 @@ dataset[sign_class]["frames"] - frames in which the important hand-pose was disc
 
 ### hand_clustering.py 
 Clusters hands by the Open Pose similarity. The clustering is performed on the important hand-poses found in the script 
-_hand_clustering_by_sign.py_. This script finds individual important hand-poses composing individual signs.
+_hand_clustering_by_sign.py_. This script finds individual important hand-poses composing individual signs (sign sub-clusters).
+The final clustering is performed on the representatives of these sub-clusters.
 
 `python hand_clustering.py /home/data/train_json_keypoints-raw.h5 /home/data/sign_hand_clusters_v03_02.h5 /home/data/hand_clusters_v03_05.p`
 
@@ -51,9 +52,9 @@ _hand_clustering_by_sign.py_. This script finds individual important hand-poses 
 
 pickle["hand_clusters"] - the final clustering of different hand-poses from all the signs. Only representative hand-poses are considered.
 The data are divided into structure - cluster_id -> list of representative indexes.  
-pickle["index_to_representative"] - information about which representative hand-pose represents which sign and sign-subcluster.  
-pickle["hand_samples"] - the individual representative hand-poses in the form of samples and frames.  
-pickle["sign_hand_clusters"] - the sign subclusters. The same as is outputted by the script _hand_clustering.py_. 
+pickle["index_to_representative"] - information about which representative hand-pose represents which sign and sign sub-cluster.  
+pickle["hand_samples"] - the individual representative hand-poses in the form of samples and frames. The same as is outputted by the script _hand_clustering.py_.
+pickle["sign_hand_clusters"] - the sign sub-clusters.  
 
 ### key_frame_extractor.py  
 Extract key-frames from sign videos. A key-frame is a frame with minimal movement both globally and locally. We extract
