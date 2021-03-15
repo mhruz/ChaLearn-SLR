@@ -12,7 +12,7 @@ Only hands with confident hand joints detection are considered (>0.4).
 
 **To generate the training hands:**
 
-`python open_pose_hand_grabber.py z:\korpusy_cv\AUTSL\train\ z:\korpusy_cv\AUTSL\train_json_keypoints-raw.h5 --out_h5 train_hand_images.h5`
+`python open_pose_hand_grabber.py /home/data/train /home/data/train_json_keypoints-raw.h5 --out_h5 /home/data/train_hand_images.h5`
 
 **To generate the validation hands:**
 
