@@ -16,11 +16,11 @@ Only hands with confident hand joints detection are considered (>0.4).
 
 **To generate the validation hands:**
 
-`python open_pose_hand_grabber.py z:\korpusy_cv\AUTSL\val\ z:\korpusy_cv\AUTSL\val_json_keypoints-raw.h5 --out_h5 val_hand_images.h5`
+`python open_pose_hand_grabber.py /home/data/val /home/data/val_json_keypoints-raw.h5 --out_h5 /home/data/val_hand_images.h5`
 
 **To generate the test hands:**
 
-`python open_pose_hand_grabber.py z:\korpusy_cv\AUTSL\test\ z:\korpusy_cv\AUTSL\test_json_keypoints-raw.h5 --out_h5 test_hand_images.h5`
+`python open_pose_hand_grabber.py /home/data/test /home/data/test_json_keypoints-raw.h5 --out_h5 /home/data/test_hand_images.h5`
 
 **Structure of HDF5 dataset**
 
@@ -34,7 +34,7 @@ The same for "right_hand". Left and right hands are handled independently, thus 
 Clusters hands by the Open Pose similarity. This script is used to find similar
 hand-poses in videos of the same sign. One sign can have several different important hand-poses, this script finds all of them. 
 
-`python hand_clustering_by_sign.py z:\korpusy_cv\AUTSL\train_json_keypoints-raw.h5 z:\korpusy_cv\AUTSL\train_labels.csv z:\cv\ChaLearnLAP\sign_hand_clusters_v03_02.h5`
+`python hand_clustering_by_sign.py /home/data/train_json_keypoints-raw.h5 /home/data/train_labels.csv /home/data/sign_hand_clusters_v03_02.h5`
 
 **Structure of HDF5 dataset**
 
@@ -45,7 +45,7 @@ dataset[sign_class]["frames"] - frames in which the important hand-pose was disc
 Clusters hands by the Open Pose similarity. The clustering is performed on the important hand-poses found in the script 
 _hand_clustering_by_sign.py_. This script finds individual important hand-poses composing individual signs.
 
-`python hand_clustering.py z:\korpusy_cv\AUTSL\train_json_keypoints-raw.h5 z:\cv\ChaLearnLAP\sign_hand_clusters_v03_02.h5 z:\cv\ChaLearnLAP\hand_clusters_v03_05.p`
+`python hand_clustering.py /home/data/train_json_keypoints-raw.h5 /home/data/sign_hand_clusters_v03_02.h5 /home/data/hand_clusters_v03_05.p`
 
 **Structure of pickle**
 
@@ -61,7 +61,7 @@ _N_ frames with, which is a parameter of the script. We repeat an algorithm unti
 We compute global movement magnitude from OpenPose joints as an absolute value of _x, y_ differences of positions. We 
 find the minimum value, set +/- 3 frames to np.inf and repeat.
 
-`python key_frame_extractor.py z:\korpusy_cv\AUTSL\train_json_keypoints-raw.h5 16 key_frames_16.h5`
+`python key_frame_extractor.py /home/data/train_json_keypoints-raw.h5 16 /home/data/key_frames_16.h5`
 
 **Structure of HDF5 dataset**
 
