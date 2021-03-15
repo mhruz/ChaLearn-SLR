@@ -24,5 +24,4 @@ docker run -it --rm --gpus all \
 		-e NVIDIA_VISIBLE_DEVICES=0 chalearn/chainer
 
 #ensambling
-#
-# see src git repo
+#see src git repo
