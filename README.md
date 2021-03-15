@@ -58,8 +58,8 @@ pickle["sign_hand_clusters"] - the sign sub-clusters.
 
 ### key_frame_extractor.py  
 Extract key-frames from sign videos. A key-frame is a frame with minimal movement both globally and locally. We extract
-_N_ frames with, which is a parameter of the script. We repeat an algorithm until the desired number of frames is extracted.
-We compute global movement magnitude from OpenPose joints as an absolute value of _x, y_ differences of positions. We 
+_N_ frames, which is a parameter of the script. We repeat an algorithm until the desired number of frames is extracted.
+We compute global movement magnitude from OpenPose joints as a norm of _x, y_ differences of positions. We 
 find the minimum value, set +/- 3 frames to np.inf and repeat.
 
 `python key_frame_extractor.py /home/data/train_json_keypoints-raw.h5 16 /home/data/key_frames_16.h5`
