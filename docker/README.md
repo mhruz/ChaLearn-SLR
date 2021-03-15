@@ -43,5 +43,8 @@ docker run -it --rm --gpus all \
 		-v $DATADIR:/home/data \
 		-e NVIDIA_VISIBLE_DEVICES=0 chalearn/chainer
 ```
+
 # Ensambling results
-see src git repo
+```
+python3 ./ensemble/evaluate_results.py
+```
