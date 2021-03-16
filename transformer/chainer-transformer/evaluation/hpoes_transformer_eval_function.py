@@ -214,7 +214,7 @@ class HpoesTransformerEvaluatorCodalab(Evaluator):
               summary.add(observation)
         
         X = pd.DataFrame(to_cpu(X))
-        X.to_csv('openpose_41b.csv', index=False)
-        #X.to_csv('openpose_41_test.csv', index=False)
+        #X.to_csv('openpose_41b.csv', index=False)
+        X.to_csv('openpose.csv', index=False)
        
         return summary.compute_mean()
