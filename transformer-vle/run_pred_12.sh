@@ -1,7 +1,7 @@
 
 DATADIR="/home/data/"
 
-OUTPUTDIR="/home/data/models/transformer-vle/train12/"
+OUTPUTDIR="/home/data/models/VLE-transformer/"
 mkdir -p $OUTPUTDIR
 
 WORKINGDIR="/home/experiment/transformer-vle"
@@ -23,4 +23,4 @@ python3 ./chainer-transformer/train_hpoes.py --train-pred pred \
                                              --optimizer SGD \
                                              --debug-data 0 \
                                              --resume "" \
-                                             --model-name $OUTPUTDIR/best_model.npz
+                                             --model-name $OUTPUTDIR/vle_12
