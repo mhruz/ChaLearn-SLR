@@ -24,3 +24,5 @@ python3 ./chainer-transformer/train_hpoes.py --train-pred pred \
                                              --debug-data 0 \
                                              --resume "" \
                                              --model-name $OUTPUTDIR/vle_12
+                                             
+mv $WORKINGDIR/vle.csv  /home/data/test_csv/vle_12.csv                                            
