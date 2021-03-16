@@ -3,10 +3,10 @@
 ## Dockers
 
 ```
-sudo docker build --rm -t chalearn/openpose -f Dockerfile.data_prep .
-sudo docker build --rm -t chalearn/pytorch2 -f Dockerfile.pytorch_vle .
-sudo docker build --rm -t chalearn/pytorch -f Dockerfile.pytorch_i3d .
-sudo docker build --rm -t chalearn/chainer -f Dockerfile.transformer .
+docker build --rm -t chalearn/openpose -f Dockerfile.data_prep .
+docker build --rm -t chalearn/pytorch2 -f Dockerfile.pytorch_vle .
+docker build --rm -t chalearn/pytorch -f Dockerfile.pytorch_i3d .
+docker build --rm -t chalearn/chainer -f Dockerfile.transformer .
 ```
 
 ## Data preparation
