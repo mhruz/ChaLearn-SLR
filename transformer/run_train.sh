@@ -22,3 +22,5 @@ python3 ./chainer-transformer/train_hpoes.py --train-pred train \
                                              --learning-rate 0.1 \
                                              --optimize-alg SGD \
                                              --resume ""
+                                             
+mv $OUTPUTDIR/best_model.npz $OUTPUTDIR/model_best                                              
