@@ -31,13 +31,13 @@ docker run -it --rm --gpus all \
 
 ## Train and test data predict
 
-### (train)/predict I3D
+### (train)/predict I3D model
 ```
 docker run -it --rm --gpus all \
 		-v $DATADIR:/home/data \
 		-e NVIDIA_VISIBLE_DEVICES=0 chalearn/pytorch
 ```
-### (train)/predict transformer
+### (train)/predict Pose transformer
 ```
 docker run -it --rm --gpus all \
 		-v $DATADIR:/home/data \
