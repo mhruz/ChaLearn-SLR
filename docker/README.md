@@ -20,7 +20,7 @@ DATADIR=/home/dnn-user/data
 ```
 docker run -it --rm --gpus all \
 		-v $DATADIR:/home/data \
-		-e NVIDIA_VISIBLE_DEVICES=0 chalearn/openpose' \
+		-e NVIDIA_VISIBLE_DEVICES=0 chalearn/openpose
 ```
 ### VLE data
 ```
@@ -44,7 +44,7 @@ docker run -it --rm --gpus all \
 		-e NVIDIA_VISIBLE_DEVICES=0 chalearn/chainer
 ```
 
-# Ensambling results
+# Ensembling results
 ```
 python3 ./ensemble/evaluate_results.py
 ```
