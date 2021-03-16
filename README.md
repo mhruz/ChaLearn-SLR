@@ -3,6 +3,8 @@ These codes generate the results for 2021 Looking at People Large Scale Signer I
 
 http://chalearnlap.cvc.uab.es/challenge/43/description/
 
+For running individual parts of the system, see folder docker and/or read code description below.
+
 ## Code Description
 
 ### Data generation
