@@ -78,7 +78,9 @@ Utilities for representing Visual Language Embeddings and Location Vectors.
 
 [Visual Language Embedding](https://drive.google.com/file/d/1hiU7HlZp9QexeVV2wrWo5OEBc53vcWCj/view?usp=sharing)
 
-[I3D models](https://drive.google.com/drive/folders/1iAri5U3e3TYti80MvuLsnOGN0l_NkNIg?usp=sharing)
+[I3D models](https://drive.google.com/drive/folders/1-QXaT4OpimJjrvlIqLYTBxw7ThxGeR6N?usp=sharing)
+
+[ViT models](https://drive.google.com/drive/folders/1itkyI7tOeBsnHh9RePp2bzoXE6r4z2Me?usp=sharing)
 
 
 ## OpenPose joint indexes
