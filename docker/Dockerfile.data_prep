@@ -12,5 +12,4 @@ RUN pip3 install h5py opencv-contrib-python-headless matplotlib
 WORKDIR /home/experiment
 RUN git clone https://github.com/mhruz/ChaLearn-SLR.git .
 
-#ENTRYPOINT ["ls"]
 CMD ./docker/run_data_prep.sh
