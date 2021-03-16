@@ -1,13 +1,12 @@
 
 DATADIR="/home/data/"
 
-OUTPUTDIR="/home/data/models/transformer"
+OUTPUTDIR="/home/data/models/Pose-transformer/"
 mkdir -p $OUTPUTDIR
 
 WORKINGDIR="/home/experiment/transformer"
 cd $WORKINGDIR
 
-# finetunign a pred pro train41
 python3 ./chainer-transformer/train_hpoes.py --train-pred train \
                                              --gpu 0 \
                                              --data-dir $DATADIR \
