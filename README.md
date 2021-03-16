@@ -3,6 +3,8 @@ These codes generate the results for 2021 Looking at People Large Scale Signer I
 
 http://chalearnlap.cvc.uab.es/challenge/43/description/
 
+For running individual parts of the system, see folder docker and/or read code description below.
+
 ## Code Description
 
 ### Data generation
@@ -43,7 +45,8 @@ dataset[sign_class]["frames"] - frames in which the important hand-pose was disc
 
 ### hand_clustering.py 
 Clusters hands by the Open Pose similarity. The clustering is performed on the important hand-poses found in the script 
-_hand_clustering_by_sign.py_. This script finds individual important hand-poses composing individual signs.
+_hand_clustering_by_sign.py_. This script finds individual important hand-poses composing individual signs (sign sub-clusters).
+The final clustering is performed on the representatives of these sub-clusters.
 
 `python hand_clustering.py /home/data/train_json_keypoints-raw.h5 /home/data/sign_hand_clusters_v03_02.h5 /home/data/hand_clusters_v03_05.p`
 
@@ -51,14 +54,14 @@ _hand_clustering_by_sign.py_. This script finds individual important hand-poses 
 
 pickle["hand_clusters"] - the final clustering of different hand-poses from all the signs. Only representative hand-poses are considered.
 The data are divided into structure - cluster_id -> list of representative indexes.  
-pickle["index_to_representative"] - information about which representative hand-pose represents which sign and sign-subcluster.  
-pickle["hand_samples"] - the individual representative hand-poses in the form of samples and frames.  
-pickle["sign_hand_clusters"] - the sign subclusters. The same as is outputted by the script _hand_clustering.py_. 
+pickle["index_to_representative"] - information about which representative hand-pose represents which sign and sign sub-cluster.  
+pickle["hand_samples"] - the individual representative hand-poses in the form of samples and frames. The same as is outputted by the script _hand_clustering.py_.  
+pickle["sign_hand_clusters"] - the sign sub-clusters.  
 
 ### key_frame_extractor.py  
 Extract key-frames from sign videos. A key-frame is a frame with minimal movement both globally and locally. We extract
-_N_ frames with, which is a parameter of the script. We repeat an algorithm until the desired number of frames is extracted.
-We compute global movement magnitude from OpenPose joints as an absolute value of _x, y_ differences of positions. We 
+_N_ frames, which is a parameter of the script. We repeat an algorithm until the desired number of frames is extracted.
+We compute global movement magnitude from OpenPose joints as a norm of _x, y_ differences of positions. We 
 find the minimum value, set +/- 3 frames to np.inf and repeat.
 
 `python key_frame_extractor.py /home/data/train_json_keypoints-raw.h5 16 /home/data/key_frames_16.h5`
