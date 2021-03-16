@@ -82,6 +82,7 @@ Utilities for representing Visual Language Embeddings and Location Vectors.
 
 [ViT models](https://drive.google.com/drive/folders/1itkyI7tOeBsnHh9RePp2bzoXE6r4z2Me?usp=sharing)
 
+[docker file instructions](/docker/README.md)
 
 ## OpenPose joint indexes
 
