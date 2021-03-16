@@ -1,5 +1,5 @@
 #create VLE input
-run_create_data.sh
+#./docker/run_create_data.sh
 
 #predict test VLE Vectors
 python /home/experiment/visual_language_embedding/predict.py /home/data/test_hand_images.h5 \
@@ -7,5 +7,5 @@ python /home/experiment/visual_language_embedding/predict.py /home/data/test_han
        mobilenet 39 /home/data/vle_hand_crops_test_v2.h5 --open_pose_h5 /home/data/train_json_keypoints-raw.h5 --resize 224 --min_conf 0.55
        
 #create Locations Vectors
-run_locations.sh
+#./docker/run_locations.sh
 
