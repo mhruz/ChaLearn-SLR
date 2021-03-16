@@ -24,4 +24,4 @@ python3 ./chainer-transformer/train_hpoes.py --train-pred train \
                                              --debug-data 0 \
                                              --resume ""
 
-cp $OUTPUTDIR/best_model.npz $OUTPUTDIR/vle_12                                         
+mv $OUTPUTDIR/best_model.npz $OUTPUTDIR/vle_12                                         
