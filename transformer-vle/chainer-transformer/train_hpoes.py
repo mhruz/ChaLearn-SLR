@@ -38,7 +38,8 @@ def main_train(args):
     ################################
     # build the network we want to train
     ##                      max_len=200,   input_size=100,  vocab_size=226  N=6,             transformer_size=512,                   ff_size=2048,         num_heads=8,  dropout_ratio=0.1
-    net = HpoesTransformer(args.max_len, args.input_size, args.vocab_size, N=args.N_stages, transformer_size=args.transformer_size, ff_size=args.ff_size, num_heads=args.num_heads, dropout_ratio=0.1)
+    net = HpoesTransformer(args.max_len, args.input_size, args.vocab_size, N=args.N_stages, transformer_size=args.transformer_size,
+                           ff_size=args.ff_size, num_heads=args.num_heads, dropout_ratio=0.1, enc_learn=args.enc_learn)
    
          
     #######################
@@ -197,6 +198,9 @@ if __name__ == "__main__":
     parser.add_argument("-bu", "--backbone-update", type=int, default=0, help="Learning rate")
     parser.add_argument("-op", "--optimizer", type=str, default='SGD', help="SGD/ADAM")
     parser.add_argument("-de", "--debug-data", type=int, default=0, help="just 500 samples")
+    parser.add_argument("-el", "--enc-learn", type=int, default=1, help="Learnebale positional encoding")
+    
+    
     
     args = parser.parse_args()
     
