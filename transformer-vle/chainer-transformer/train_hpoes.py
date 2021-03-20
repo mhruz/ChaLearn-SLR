@@ -189,6 +189,7 @@ if __name__ == "__main__":
     parser.add_argument("-fs", "--ff-size", type=int, default=2048, help="full conected size")
     parser.add_argument("-nh", "--num-heads", type=int, default=8, help="num heads")  #model size musi byt delitelny poctem hlav 512/8=64
     parser.add_argument("-ml", "--max-len", type=int, default=120, help="Max len sequence")
+    parser.add_argument("-el", "--enc-learn", type=int, default=0, help="Learnebale positional encoding")
     parser.add_argument("-md", "--model-dir", type=str, default='train', help="where save model")
     parser.add_argument("-dd", "--data-dir", type=str, default='./', help="where are data")
     parser.add_argument("-ip", "--train-pred", type=str, default='none', help="if compute prediction")
@@ -198,7 +199,6 @@ if __name__ == "__main__":
     parser.add_argument("-bu", "--backbone-update", type=int, default=0, help="Learning rate")
     parser.add_argument("-op", "--optimizer", type=str, default='SGD', help="SGD/ADAM")
     parser.add_argument("-de", "--debug-data", type=int, default=0, help="just 500 samples")
-    parser.add_argument("-el", "--enc-learn", type=int, default=1, help="Learnebale positional encoding")
     
     
     
