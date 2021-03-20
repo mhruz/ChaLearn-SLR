@@ -23,7 +23,7 @@ class HpoesTransformer(Chain):
         :param transformer_size: determines the number of hidden units to be used in the transformer
     """
 
-    def __init__(self, max_len, input_size, vocab_size, N=6, transformer_size=512, ff_size=2048, num_heads=8, dropout_ratio=0.1):
+    def __init__(self, max_len, input_size, vocab_size, N=6, transformer_size=512, ff_size=2048, num_heads=8, dropout_ratio=0.1, enc_learn=True):
         super().__init__()
         self.vocab_size = vocab_size
         self.input_size = input_size
@@ -48,7 +48,8 @@ class HpoesTransformer(Chain):
                 ff_size=ff_size,
                 num_heads=num_heads,
                 dropout_ratio=dropout_ratio,
-                max_len=max_len
+                max_len=max_len,
+                enc_learn=enc_learn
             )
             
             self.model = model
