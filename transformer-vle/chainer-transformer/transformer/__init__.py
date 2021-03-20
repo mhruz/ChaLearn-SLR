@@ -93,7 +93,7 @@ from .attention import MultiHeadedAttention
     #return model
 
 
-def slr_get_encoder(input_size, N=6, model_size=512, ff_size=2048, num_heads=8, dropout_ratio=0.1, max_len=120):
+def slr_get_encoder(input_size, N=6, model_size=512, ff_size=2048, num_heads=8, dropout_ratio=0.1, max_len=120, enc_learn=True):
     """
         Convenience function that returns the full transformer model including encoder and decoder.
     :param src_vocab_size: the number of classes for the encoder
@@ -106,9 +106,11 @@ def slr_get_encoder(input_size, N=6, model_size=512, ff_size=2048, num_heads=8, 
     """
     attention = MultiHeadedAttention(num_heads, model_size, dropout_ratio=dropout_ratio)
     feed_forward = PositionwiseFeedForward(model_size, ff_size, dropout_ratio=dropout_ratio)
-    positional_encoding = PositionalEncoding(model_size, dropout_ratio=dropout_ratio)
-    #positional_encoding = PositionalEncodingLearnable(model_size, dropout_ratio=dropout_ratio, max_len=max_len)
-
+    if enc_learn:
+        positional_encoding = PositionalEncodingLearnable(model_size, dropout_ratio=dropout_ratio, max_len=max_len)
+    else:
+        positional_encoding = PositionalEncoding(model_size, dropout_ratio=dropout_ratio)
+    
     encoder_layer = EncoderLayer(
         model_size,
         copy.deepcopy(attention),
