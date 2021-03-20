@@ -18,6 +18,7 @@ python3 ./chainer-transformer/train_hpoes.py --train-pred train \
                                              --transformer-size 512 \
                                              --ff-size 2048 \
                                              --num-heads 2 \
+                                             --enc-learn 1 \
                                              --model-dir $OUTPUTDIR \
                                              --learning-rate 0.1 \
                                              --optimizer SGD \
