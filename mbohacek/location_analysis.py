@@ -5,7 +5,7 @@ from mbohacek.pose_analysis import *
 from mbohacek.util import *
 
 
-def analyze_hand_position(hands_data: list) -> (str, tuple):
+def analyze_hand_gesture(hands_data: list) -> (str, tuple):
     """
     Analyzes the hand landmarks and classifies one of the pre-defined hand gestures and calculates the centroid.
 
@@ -76,7 +76,7 @@ def analyze_hands_areas(body_landmarks: list, hands: list, face_landmarks: list,
 
     # Iterate over the hands (first two found)
     for hand_index, hand in enumerate(hands[:2]):
-        hand_gesture, centroid = analyze_hand_position(hand)
+        hand_gesture, centroid = analyze_hand_gesture(hand)
 
         results = {"centroid": {}, "index_tip": {}}
 
