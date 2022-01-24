@@ -12,7 +12,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Extracts key-frames representing a SL video.')
     parser.add_argument('joints_h5', type=str, help='path to h5 with hand hand joints')
     parser.add_argument('key_frames', type=int, help='how many key-frames extract per video')
-    parser.add_argument('--video_root', type=str, help='root of vide files for optional verbose')
+    parser.add_argument('--video_root', type=str, help='root of video files for optional verbose')
     parser.add_argument('output', type=str, help='output h5 with per-video key-frames')
     args = parser.parse_args()
 
