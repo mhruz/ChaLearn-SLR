@@ -7,5 +7,8 @@ venv/
 yvan/data/*
 !yvan/data/train_list.csv
 !yvan/data/train_list_keyframes.csv
+yvan/outcmaes/
+yvan/results/
+yvan/output/
 *.h5
 *.p

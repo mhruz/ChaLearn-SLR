@@ -8,12 +8,12 @@ import argparse
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-core_directory', type=str, default='./data/', help='data directory')
+    parser.add_argument('-core_directory', type=str, default='data/', help='data directory')
     parser.add_argument('-csv_file', type=str, default='train_labels.csv', help='train csv file')
     args = parser.parse_args()
     BASE_DIR = args.core_directory
 
-    df_train = pd.read_csv(os.path.join(BASE_DIR, "train_labels.csv"))
+    df_train = pd.read_csv(r'D:\Work\Challenges\ChaLearn-SLR\yvan\data\train_labels.csv')
     label_num_min = df_train["label"].min()
     label_num_max = df_train["label"].max()
     labels = df_train["label"].value_counts()
