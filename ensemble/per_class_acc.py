@@ -3,15 +3,15 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 
-with open(r'w:\cv\SL_sensors_2022\WLASL300\GT\val.txt') as txt_file:
+with open(r'e:\ZCU\JSALT2020\ensemble_SL_sensors_2022\AUTSL_val.txt') as txt_file:
     ground_truth = txt_file.readlines()
 
 gt_labels = []
 
 for i, gt in enumerate(ground_truth):
-    gt_labels.append(gt.split(';')[-1][:-1])
+    gt_labels.append(gt.split(',')[-1][:-1])
 
-data_dir = r"w:\cv\SL_sensors_2022\WLASL300\predictions\val"
+data_dir = r"e:\ZCU\JSALT2020\ensemble_SL_sensors_2022"
 # predicted_csv = ['crop.csv', 'crop_new.csv', 'mask.csv', 'keyframe_mask.csv', 'keyframe.csv', 'keyframe_new.csv',
 #                  'openpose_41b.csv', 'vle_4.csv', 'vle_3.csv', '1.csv', '2.csv', '3.csv', '4.csv', '5.csv']
 
@@ -22,9 +22,9 @@ data_dir = r"w:\cv\SL_sensors_2022\WLASL300\predictions\val"
 #                  'keyframe_mask_new.csv', 'openpose_41b.csv',
 #                  'vle_4.csv', 'vle_3.csv']
 
-predicted_csv = ['spoter_mmpose_fixed.txt']
-# predicted_csv = os.listdir(data_dir)
-# predicted_csv = [pred for pred in predicted_csv if pred.endswith(".csv")]
+# predicted_csv = ['spoter_mmpose_fixed.txt']
+predicted_csv = os.listdir(data_dir)
+predicted_csv = [pred for pred in predicted_csv if pred.endswith(".csv")]
 
 print(predicted_csv)
 predicts = {}
@@ -43,12 +43,6 @@ class_picker = np.zeros_like(model_picker)
 
 for i, model in enumerate(predicts):
     max_confs = np.argmax(np.asarray(predicts[model]), axis=1)
-    # aa = np.array(predicts[model])
-    #
-    # for k, v in enumerate(max_confs):
-    #     aa[k, v] = 0
-    #
-    # max_confs = np.argmax(aa, axis=1)
 
     class_picker[:, i] = np.max(np.asarray(predicts[model]), axis=1)
     for j, d in enumerate(gt_labels):

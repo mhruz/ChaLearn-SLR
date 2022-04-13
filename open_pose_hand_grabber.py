@@ -171,7 +171,7 @@ if __name__ == "__main__":
                   " of video and OpenPose joints ({}/{})".format(number_of_frames, number_of_joint_frames))
 
         if args.out_h5 is not None:
-            # create full size dataset, it will be croped when saving to h5
+            # create full size dataset, it will be cropped when saving to h5
             left_hands = np.zeros((number_of_joint_frames, args.out_size, args.out_size, 3), dtype=np.uint8)
             right_hands = np.zeros((number_of_joint_frames, args.out_size, args.out_size, 3), dtype=np.uint8)
 
@@ -195,7 +195,7 @@ if __name__ == "__main__":
             joints = joints_h5[video_fn][frame]
             # draw_joints(im, joints)
 
-            if args.out_h5 is not None:
+            if args.out_h5 is not None or args.visualize:
                 # grab image
                 ret, im = video.read()
                 if not ret:
@@ -229,11 +229,14 @@ if __name__ == "__main__":
                     left_hand_boxes.append(bbox_lh)
 
             if args.visualize:
-                cv2.imshow("left hand", left_hand_image)
-                cv2.imshow("right hand", right_hand_image)
+                if mlh >= args.threshold:
+                    cv2.imshow("left hand", left_hand_image)
+                    print("Left hand image size: {}".format(left_hand_image.shape))
 
-                print("Left hand image size: {}".format(left_hand_image.shape))
-                print("Right hand image size: {}".format(right_hand_image.shape))
+                if mrh >= args.threshold:
+                    cv2.imshow("right hand", right_hand_image)
+                    print("Right hand image size: {}".format(right_hand_image.shape))
+
                 print("Left Hand conf: mean {}\nRight Hand conf: mean {}".format(mlh, mrh))
 
                 cv2.imshow("image", im)
