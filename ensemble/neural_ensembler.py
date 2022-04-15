@@ -117,18 +117,19 @@ def train(model, data_loader, epochs, optimizer, criterion):
 def validate(model, data_loader, criterion):
     model.eval()
     hits = 0
-    num_data = 0
+    num_batches = 0
+    loss_val = 0
 
     for data, label in data_loader:
         pred = model(data)
-        loss_val = criterion(pred, label)
+        loss_val += criterion(pred, label)
         pred_idx = torch.argmax(pred, dim=1)
-        hits = torch.sum(pred_idx == label)
+        hits += torch.sum(pred_idx == label)
 
-        num_data += 1
+        num_batches += 1
 
-    loss_val /= num_data
-    acc = hits / num_data
+    loss_val /= num_batches
+    acc = hits / len(data_loader.dataset)
 
     wandb.log({"loss_val": loss_val})
     wandb.log({"acc": acc})
@@ -136,7 +137,7 @@ def validate(model, data_loader, criterion):
 
 if __name__ == "__main__":
     learning_rate = 1e-3
-    epochs = 500
+    epochs = 200
     batch_size = 64
     num_heads = 3
     num_per_head = 16
