@@ -1,3 +1,5 @@
+import sys
+
 import torch.nn
 from torch.nn import TransformerEncoder, TransformerEncoderLayer
 from torch.nn import Linear, Parameter
@@ -29,19 +31,19 @@ class AUTSLDataSet(Dataset):
         self.num_datapoints = -1
 
         for pcsv in csv_filenames:
-            _csv = pd.read_csv(pcsv)
+            _csv = pd.read_csv(pcsv, sep=None)
             self.model_predicts[pcsv] = _csv.to_numpy()
             if self.num_classes == -1:
                 self.num_classes = _csv.shape[1]
             else:
                 if _csv.shape[1] != self.num_classes:
-                    raise "Inconsistent number of classes in models. Fault at {}.".format(pcsv)
+                    raise Exception("Inconsistent number of classes in models. Fault at {}.".format(pcsv))
 
             if self.num_datapoints == -1:
                 self.num_datapoints = _csv.shape[0]
             else:
                 if _csv.shape[0] != self.num_datapoints:
-                    raise "Inconsistent number of datapoints in models. Fault at {}.".format(pcsv)
+                    raise Exception("Inconsistent number of datapoints in models. Fault at {}.".format(pcsv))
 
     def __len__(self):
         return len(self.labels)
@@ -95,7 +97,7 @@ class NeuralEnsemblerBERT(torch.nn.Module):
         return cls_logits
 
 
-def train(model, data_loader, epochs, optimizer, criterion):
+def train(model, data_loader, epochs, optimizer, criterion, val_data_loader=None):
     wandb.watch(model)
 
     for epoch in range(epochs):
@@ -111,7 +113,7 @@ def train(model, data_loader, epochs, optimizer, criterion):
 
             wandb.log({"loss": loss})
 
-        validate(model, data_loader, criterion)
+        validate(model, val_data_loader, criterion)
 
 
 def validate(model, data_loader, criterion):
@@ -154,10 +156,23 @@ if __name__ == "__main__":
     print(device)
 
     data_dir = r"e:\ZCU\JSALT2020\ensemble_SL_sensors_2022"
+    test_data_dir = r"e:\ZCU\JSALT2020\ensemble_SL_sensors_2022\test"
     predicted_csv = os.listdir(data_dir)
-    predicted_csv = [os.path.join(data_dir, pred) for pred in predicted_csv if pred.endswith(".csv")]
-    val_data = AUTSLDataSet(predicted_csv, r"e:\ZCU\JSALT2020\ensemble_SL_sensors_2022\AUTSL_val.txt", device)
+    predicted_csv = [pred for pred in predicted_csv if pred.endswith(".csv")]
+    predicted_csv_full_path = [os.path.join(data_dir, pred) for pred in predicted_csv]
+
+    test_csv = os.listdir(test_data_dir)
+    test_csv = [pred for pred in test_csv if pred.endswith(".csv")]
+    test_csv_full_path = [os.path.join(test_data_dir, pred) for pred in test_csv]
+    # test if the models of predicted csv and test csv are the same
+    if test_csv != predicted_csv:
+        print("Val and Test predictions are not the same:\n{}\n{}".format(predicted_csv, test_csv))
+        sys.exit(-1)
+
+    val_data = AUTSLDataSet(predicted_csv_full_path, r"e:\ZCU\JSALT2020\ensemble_SL_sensors_2022\AUTSL_val.txt", device)
+    test_data = AUTSLDataSet(test_csv_full_path, r"e:\ZCU\JSALT2020\ensemble_SL_sensors_2022\AUTSL_test.txt", device)
     val_data_loader = DataLoader(val_data, batch_size=batch_size, shuffle=True)
+    test_data_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
     ensembler = NeuralEnsemblerBERT(14, val_data.num_classes, num_heads, num_per_head)
     ensembler = ensembler.to(device)
@@ -167,4 +182,4 @@ if __name__ == "__main__":
 
     criterion = torch.nn.CrossEntropyLoss()
 
-    train(ensembler, val_data_loader, epochs, optimizer, criterion)
+    train(ensembler, val_data_loader, epochs, optimizer, criterion, val_data_loader=test_data_loader)
