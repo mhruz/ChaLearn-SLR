@@ -98,11 +98,12 @@ class NeuralEnsemblerBERT(torch.nn.Module):
 
 
 def train(model, data_loader, epochs, optimizer, criterion, val_data_loader=None):
-    wandb.watch(model)
+    # wandb.watch(model)
 
     for epoch in range(epochs):
         model.train()
         for data, label in data_loader:
+
             optimizer.zero_grad()
 
             pred = model(data)
@@ -137,6 +138,24 @@ def validate(model, data_loader, criterion):
     wandb.log({"acc": acc})
 
 
+def augment(data, apply_p=0.5, gauss_std=0.01, mask_p=0.1):
+    # data is expected (batch_size, seq_len, features)
+    # generate apply mask
+    apply_mask = torch.rand((data.shape[0], data.shape[1]))
+    apply_mask = apply_mask <= apply_p
+    gauss_noise = torch.normal(0, gauss_std, size=data.shape)
+    if data.is_cuda:
+        gauss_noise = gauss_noise.to(data.get_device())
+
+    data_noise = data + gauss_noise
+    data[apply_mask.unsqueeze(2).repeat([1, 1, data.shape[2]])] = data_noise
+
+    data = F.softmax(data, dim=2)
+
+    # mask = torch.rand((data.shape[0], data.shape[1]))
+    return data
+
+
 if __name__ == "__main__":
     learning_rate = 1e-3
     epochs = 200
@@ -144,7 +163,7 @@ if __name__ == "__main__":
     num_heads = 3
     num_per_head = 16
 
-    # wandb.login(key="3a6eb272feb7d39068e66471c971b3ce5e45e4ab")
+    wandb.login(key="3a6eb272feb7d39068e66471c971b3ce5e45e4ab")
     wandb.init(project="my-test-project", entity="mhruz")
     wandb.config = {
         "learning_rate": learning_rate,
@@ -155,8 +174,8 @@ if __name__ == "__main__":
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(device)
 
-    data_dir = r"e:\ZCU\JSALT2020\ensemble_SL_sensors_2022"
-    test_data_dir = r"e:\ZCU\JSALT2020\ensemble_SL_sensors_2022\test"
+    data_dir = r"d:\repositories\ChaLearn-SLR\sensors"
+    test_data_dir = r"d:\repositories\ChaLearn-SLR\sensors\test"
     predicted_csv = os.listdir(data_dir)
     predicted_csv = [pred for pred in predicted_csv if pred.endswith(".csv")]
     predicted_csv_full_path = [os.path.join(data_dir, pred) for pred in predicted_csv]
@@ -169,10 +188,13 @@ if __name__ == "__main__":
         print("Val and Test predictions are not the same:\n{}\n{}".format(predicted_csv, test_csv))
         sys.exit(-1)
 
-    val_data = AUTSLDataSet(predicted_csv_full_path, r"e:\ZCU\JSALT2020\ensemble_SL_sensors_2022\AUTSL_val.txt", device)
-    test_data = AUTSLDataSet(test_csv_full_path, r"e:\ZCU\JSALT2020\ensemble_SL_sensors_2022\AUTSL_test.txt", device)
+    val_data = AUTSLDataSet(predicted_csv_full_path, r"d:\repositories\ChaLearn-SLR\sensors\AUTSL_val.txt", device)
+    test_data = AUTSLDataSet(test_csv_full_path, r"d:\repositories\ChaLearn-SLR\sensors\AUTSL_test.txt", device)
     val_data_loader = DataLoader(val_data, batch_size=batch_size, shuffle=True)
     test_data_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
+
+    data, label = next(iter(val_data_loader))
+    augment(data, 1.0)
 
     ensembler = NeuralEnsemblerBERT(14, val_data.num_classes, num_heads, num_per_head)
     ensembler = ensembler.to(device)
