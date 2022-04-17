@@ -59,12 +59,12 @@ class AUTSLDataSet(Dataset):
 
 
 class NeuralEnsemblerBERT(torch.nn.Module):
-    def __init__(self, num_models, num_classes, num_heads, num_per_head, num_enc_layers=3):
+    def __init__(self, num_models, num_classes, num_heads, num_per_head, dim_feedforward=128, num_enc_layers=3):
         super(NeuralEnsemblerBERT, self).__init__()
 
         self.embed_dim = num_per_head * num_heads
 
-        encoder_layer = TransformerEncoderLayer(self.embed_dim, num_heads, 128, activation="relu")
+        encoder_layer = TransformerEncoderLayer(self.embed_dim, num_heads, dim_feedforward, activation="relu")
         self.encoder = TransformerEncoder(encoder_layer, num_enc_layers)
         self.class_token = Parameter(torch.rand(self.embed_dim))
         self.pos_embedding = Parameter(torch.rand((num_models + 1, self.embed_dim)))
@@ -81,7 +81,6 @@ class NeuralEnsemblerBERT(torch.nn.Module):
         # torch.nn.init.normal_(self.class_head.weight)
 
     def forward(self, x):
-
         n, seq, dim = x.shape
         x = self.embedding(x)
         cls_emb = torch.tile(self.class_token, [n, 1, 1])
@@ -103,6 +102,7 @@ def train(model, data_loader, epochs, optimizer, criterion, val_data_loader=None
     for epoch in range(epochs):
         model.train()
         for data, label in data_loader:
+            data_aug = augment(data, apply_p=0.2, gauss_std=0.01, uncertain=0.02)
 
             optimizer.zero_grad()
 
@@ -138,7 +138,7 @@ def validate(model, data_loader, criterion):
     wandb.log({"acc": acc})
 
 
-def augment(data, apply_p=0.5, gauss_std=0.01, mask_p=0.1):
+def augment(data, apply_p=0.5, gauss_std=0.01, uncertain=0.1):
     # data is expected (batch_size, seq_len, features)
     # generate apply mask
     apply_mask = torch.rand((data.shape[0], data.shape[1]))
@@ -147,12 +147,20 @@ def augment(data, apply_p=0.5, gauss_std=0.01, mask_p=0.1):
     if data.is_cuda:
         gauss_noise = gauss_noise.to(data.get_device())
 
+    # compute the noisy data
     data_noise = data + gauss_noise
-    data[apply_mask.unsqueeze(2).repeat([1, 1, data.shape[2]])] = data_noise
+    # apply only to some sequence elements based on apply_p
+    # TODO: better way to write this?!
+    data[torch.where(apply_mask.unsqueeze(2).repeat([1, 1, data.shape[2]]) == True)] = data_noise[
+        torch.where(apply_mask.unsqueeze(2).repeat([1, 1, data.shape[2]]) == True)]
 
-    data = F.softmax(data, dim=2)
+    # make some models absolutely uncertain
+    apply_mask = torch.rand((data.shape[0], data.shape[1]))
+    apply_mask = apply_mask <= uncertain
+    data[torch.where(apply_mask.unsqueeze(2).repeat([1, 1, data.shape[2]]) == True)] = 0
 
-    # mask = torch.rand((data.shape[0], data.shape[1]))
+    data = data / torch.sum(data, dim=2).unsqueeze(2).repeat([1, 1, data.shape[2]])
+
     return data
 
 
@@ -160,22 +168,28 @@ if __name__ == "__main__":
     learning_rate = 1e-3
     epochs = 200
     batch_size = 64
-    num_heads = 3
-    num_per_head = 16
+    num_heads = 1
+    num_per_head = 14
+    dim_feedforward = 64
+    num_layers = 1
+
+    # os.environ["WANDB_DISABLED"] = "true"
 
     wandb.login(key="3a6eb272feb7d39068e66471c971b3ce5e45e4ab")
     wandb.init(project="my-test-project", entity="mhruz")
     wandb.config = {
         "learning_rate": learning_rate,
         "epochs": epochs,
-        "batch_size": batch_size
+        "batch_size": batch_size,
+        "dim_feedforward": 64,
+        "num_layers": 1
     }
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(device)
 
-    data_dir = r"d:\repositories\ChaLearn-SLR\sensors"
-    test_data_dir = r"d:\repositories\ChaLearn-SLR\sensors\test"
+    data_dir = r"e:\ZCU\JSALT2020\ensemble_SL_sensors_2022"
+    test_data_dir = r"e:\ZCU\JSALT2020\ensemble_SL_sensors_2022\test"
     predicted_csv = os.listdir(data_dir)
     predicted_csv = [pred for pred in predicted_csv if pred.endswith(".csv")]
     predicted_csv_full_path = [os.path.join(data_dir, pred) for pred in predicted_csv]
@@ -188,15 +202,13 @@ if __name__ == "__main__":
         print("Val and Test predictions are not the same:\n{}\n{}".format(predicted_csv, test_csv))
         sys.exit(-1)
 
-    val_data = AUTSLDataSet(predicted_csv_full_path, r"d:\repositories\ChaLearn-SLR\sensors\AUTSL_val.txt", device)
-    test_data = AUTSLDataSet(test_csv_full_path, r"d:\repositories\ChaLearn-SLR\sensors\AUTSL_test.txt", device)
+    val_data = AUTSLDataSet(predicted_csv_full_path, r"e:\ZCU\JSALT2020\ensemble_SL_sensors_2022\AUTSL_val.txt", device)
+    test_data = AUTSLDataSet(test_csv_full_path, r"e:\ZCU\JSALT2020\ensemble_SL_sensors_2022\AUTSL_test.txt", device)
     val_data_loader = DataLoader(val_data, batch_size=batch_size, shuffle=True)
     test_data_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
-    data, label = next(iter(val_data_loader))
-    augment(data, 1.0)
-
-    ensembler = NeuralEnsemblerBERT(14, val_data.num_classes, num_heads, num_per_head)
+    ensembler = NeuralEnsemblerBERT(14, val_data.num_classes, num_heads, num_per_head, dim_feedforward=dim_feedforward,
+                                    num_enc_layers=num_layers)
     ensembler = ensembler.to(device)
 
     # optimizer = SGD(ensembler.parameters(), lr=learning_rate, momentum=0.9)
