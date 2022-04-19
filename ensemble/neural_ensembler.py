@@ -229,7 +229,7 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', type=int, help='number data in one batch', default=4)
     parser.add_argument('--save_epoch', type=int, help='after how many epoch to save the model', default=10)
     parser.add_argument('--device', type=int, help='device number', default=0)
-    parser.add_argument('--optimizer', type=int, help='name of the optimizer', default="sgd")
+    parser.add_argument('--optimizer', type=str, help='name of the optimizer', default="sgd")
     parser.add_argument('output', type=str, help='path to output network')
     args = parser.parse_args()
 
