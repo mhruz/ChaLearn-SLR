@@ -1,11 +1,31 @@
-program: train.py
+program: neural_ensembler.py
 method: bayes
 metric:
-  name: validation_loss
-  goal: minimize
+  name: acc_val
+  goal: maximize
 parameters:
   learning_rate:
-    min: 0.0001
-    max: 0.1
+    min: 0.00001
+    max: 0.01
+  dim_feedforward:
+    min: 64
+    max: 1024
+  num_layers:
+    min: 1
+    max: 8
+  num_heads:
+    min: 1
+    max: 9
+  num_per_head:
+    min: 8
+    max: 64
   optimizer:
     values: ["adam", "sgd"]
+command:
+  - python3
+  - neural_ensembler.py
+  - TRAIN_DATA_DIR
+  - TEST_DATA_DIR
+  - TRAIN_DATA
+  - TEST_DATA
+  - ${args}

@@ -82,11 +82,6 @@ class NeuralEnsemblerBERT(torch.nn.Module):
         # )
         self.class_head = Linear(self.embed_dim, num_classes)
 
-        # torch.nn.init.uniform_(self.class_token)
-        # torch.nn.init.xavier_normal_(self.pos_embedding)
-        # torch.nn.init.normal_(self.embedding.weight)
-        # torch.nn.init.normal_(self.class_head.weight)
-
     def forward(self, x):
         n, seq, dim = x.shape
         x = self.embedding(x)
@@ -241,7 +236,7 @@ if __name__ == "__main__":
     dim_feedforward = args.dim_feedforward
     num_layers = args.num_layers
 
-    os.environ["WANDB_DISABLED"] = "true"
+    # os.environ["WANDB_DISABLED"] = "true"
 
     device = "cuda:{}".format(args.device)
     print(device)
@@ -286,13 +281,12 @@ if __name__ == "__main__":
         "batch_size": batch_size,
         "dim_feedforward": dim_feedforward,
         "num_layers": num_layers,
-        "num_heads": 3,
-        "num_per_head": 14,
+        "num_heads": num_heads,
+        "num_per_head": num_per_head,
         "model_type": str(ensembler),
         "optimizer": optimizer
     }
 
-    wandb.login(key="3a6eb272feb7d39068e66471c971b3ce5e45e4ab")
     wandb.init(project="neural_ensembler", entity="mhruz", config=config)
 
     train(ensembler, val_data_loader, epochs, optimizer, criterion, val_data_loader=test_data_loader)
