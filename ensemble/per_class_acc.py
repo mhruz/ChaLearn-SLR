@@ -3,7 +3,7 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 
-with open(r'e:\ZCU\JSALT2020\ensemble_SL_sensors_2022\AUTSL_val.txt') as txt_file:
+with open(r'w:\cv\SL_sensors_2022\AUTSL\GT\AUTSL_val.txt') as txt_file:
     ground_truth = txt_file.readlines()
 
 gt_labels = []
@@ -11,7 +11,7 @@ gt_labels = []
 for i, gt in enumerate(ground_truth):
     gt_labels.append(gt.split(',')[-1][:-1])
 
-data_dir = r"e:\ZCU\JSALT2020\ensemble_SL_sensors_2022"
+data_dir = r"f:\JSALT2020\ChaLearn-SLR\Data\val\softmax"
 # predicted_csv = ['crop.csv', 'crop_new.csv', 'mask.csv', 'keyframe_mask.csv', 'keyframe.csv', 'keyframe_new.csv',
 #                  'openpose_41b.csv', 'vle_4.csv', 'vle_3.csv', '1.csv', '2.csv', '3.csv', '4.csv', '5.csv']
 

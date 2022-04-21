@@ -217,7 +217,7 @@ if __name__ == "__main__":
     parser.add_argument('test_dir', type=str, help='path to test dataset root')
     parser.add_argument('train_data', type=str, help='path to train dataset')
     parser.add_argument('test_data', type=str, help='path to test dataset')
-    parser.add_argument('--lr', type=float, help='learning rate', default=1e-3)
+    parser.add_argument('--learning_rate', type=float, help='learning rate', default=1e-3)
     parser.add_argument('--num_heads', type=int, help='number of heads in Encoder', default=8)
     parser.add_argument('--num_per_head', type=int, help='dimension of heads in Encoder', default=32)
     parser.add_argument('--dim_feedforward', type=int, help='dimension of heads in Encoder', default=1024)
