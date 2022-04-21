@@ -230,7 +230,7 @@ if __name__ == "__main__":
     parser.add_argument('output', type=str, help='path to output network')
     args = parser.parse_args()
 
-    learning_rate = args.lr
+    learning_rate = args.learning_rate
     epochs = args.max_epoch
     batch_size = args.batch_size
     num_heads = args.num_heads
