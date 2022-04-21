@@ -234,7 +234,7 @@ if __name__ == "__main__":
     epochs = args.max_epoch
     batch_size = args.batch_size
     num_heads = args.num_heads
-    num_per_head = args.num_per_heads
+    num_per_head = args.num_per_head
     dim_feedforward = args.dim_feedforward
     num_layers = args.num_layers
 
