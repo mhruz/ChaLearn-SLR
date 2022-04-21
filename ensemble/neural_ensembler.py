@@ -196,16 +196,14 @@ def augment(data, apply_p=0.5, gauss_std=0.01, uncertain=0.1):
     # compute the noisy data
     data_noise = data + gauss_noise
     # apply only to some sequence elements based on apply_p
-    # TODO: better way to write this?!
-    data[torch.where(apply_mask.unsqueeze(2).repeat([1, 1, data.shape[2]]) == True)] = data_noise[
-        torch.where(apply_mask.unsqueeze(2).repeat([1, 1, data.shape[2]]) == True)]
+    data[apply_mask] = data_noise[apply_mask]
 
     # make some models absolutely uncertain
     apply_mask = torch.rand((data.shape[0], data.shape[1]))
     apply_mask = apply_mask <= uncertain
-    data[torch.where(apply_mask.unsqueeze(2).repeat([1, 1, data.shape[2]]) == True)] = 1
+    data[apply_mask] = 1
 
-    data = data / torch.sum(data, dim=2).unsqueeze(2).repeat([1, 1, data.shape[2]])
+    data = data / torch.sum(data, dim=2).unsqueeze(2)
 
     return data
 
@@ -225,7 +223,7 @@ if __name__ == "__main__":
     parser.add_argument('--max_epoch', type=int, help='number of max epochs', default=30)
     parser.add_argument('--batch_size', type=int, help='number data in one batch', default=4)
     parser.add_argument('--save_epoch', type=int, help='after how many epoch to save the model', default=10)
-    parser.add_argument('--device', type=int, help='device number', default=0)
+    parser.add_argument('--device', help='device number', default=0)
     parser.add_argument('--optimizer', type=str, help='name of the optimizer', default="sgd")
     parser.add_argument('output', type=str, help='path to output network')
     args = parser.parse_args()
@@ -240,7 +238,10 @@ if __name__ == "__main__":
 
     # os.environ["WANDB_DISABLED"] = "true"
 
-    device = "cuda:{}".format(args.device)
+    if args.device != "cpu":
+        device = "cuda:{}".format(args.device)
+    else:
+        device = "cpu"
     print(device)
 
     data_dir = args.train_dir
@@ -262,11 +263,11 @@ if __name__ == "__main__":
     val_data_loader = DataLoader(val_data, batch_size=batch_size, shuffle=True)
     test_data_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
-    ensembler = NeuralEnsemblerBERT(14, val_data.num_classes, num_heads, num_per_head, dim_feedforward=dim_feedforward,
-                                    num_enc_layers=num_layers)
-    # ensembler = NeuralEnsemblerBERTWeighter(14, val_data.num_classes, num_heads, num_per_head,
-    #                                         dim_feedforward=dim_feedforward,
-    #                                         num_enc_layers=num_layers)
+    ensembler = NeuralEnsemblerBERT(len(test_data.model_predicts), val_data.num_classes, num_heads, num_per_head,
+                                    dim_feedforward=dim_feedforward, num_enc_layers=num_layers)
+    # ensembler = NeuralEnsemblerBERTWeighter(len(test_data.model_predicts), val_data.num_classes, num_heads,
+    #                                         num_per_head,
+    #                                         dim_feedforward=dim_feedforward, num_enc_layers=num_layers)
     ensembler = ensembler.to(device)
 
     if args.optimizer == "sgd":
