@@ -287,6 +287,6 @@ if __name__ == "__main__":
         "optimizer": optimizer
     }
 
-    wandb.init(project="neural_ensembler", entity="mhruz", config=config)
+    wandb.init(project="sensors_2022", entity="mhruz", config=config)
 
     train(ensembler, val_data_loader, epochs, optimizer, criterion, val_data_loader=test_data_loader)
