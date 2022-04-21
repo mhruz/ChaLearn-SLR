@@ -160,6 +160,8 @@ def train(model, data_loader, epochs, optimizer, criterion, val_data_loader=None
         validate(model, val_data_loader, criterion)
         validate(model, data_loader, criterion, suffix="_train")
 
+    return model
+
 
 def validate(model, data_loader, criterion, suffix="_val"):
     model.eval()
@@ -289,4 +291,7 @@ if __name__ == "__main__":
 
     wandb.init(project="sensors_2022", entity="mhruz", config=config)
 
-    train(ensembler, val_data_loader, epochs, optimizer, criterion, val_data_loader=test_data_loader)
+    ensembler = train(ensembler, val_data_loader, epochs, optimizer, criterion, val_data_loader=test_data_loader)
+
+    torch.save(ensembler.state_dict(), os.path.join(wandb.run.dir, args.output))
+    wandb.save(args.output)
