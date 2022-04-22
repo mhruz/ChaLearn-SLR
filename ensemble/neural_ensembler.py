@@ -98,6 +98,42 @@ class NeuralEnsemblerBERT(torch.nn.Module):
         return cls_logits
 
 
+class NeuralEnsemblerBERTModelWeighter(torch.nn.Module):
+    def __init__(self, num_models, num_classes, num_heads, num_per_head, dim_feedforward=128, num_enc_layers=3):
+        super(NeuralEnsemblerBERTModelWeighter, self).__init__()
+
+        self.embed_dim = num_per_head * num_heads
+
+        encoder_layer = TransformerEncoderLayer(self.embed_dim, num_heads, dim_feedforward, activation="relu")
+        self.encoder = TransformerEncoder(encoder_layer, num_enc_layers)
+        self.class_token = Parameter(torch.rand(self.embed_dim))
+        self.pos_embedding = Parameter(torch.rand((num_models + 1, self.embed_dim)))
+        self.embedding = Linear(num_classes, self.embed_dim, bias=False)
+        # self.class_head = torch.nn.Sequential(
+        #     Linear(self.embed_dim, self.embed_dim),
+        #     Linear(self.embed_dim, num_classes)
+        # )
+        self.class_head = Linear(self.embed_dim, num_models)
+
+    def forward(self, x):
+        n, seq, dim = x.shape
+        x_emb = self.embedding(x)
+        cls_emb = torch.tile(self.class_token, [n, 1, 1])
+        pos_emb = torch.tile(self.pos_embedding, [n, 1, 1])
+        t = torch.cat((cls_emb, x_emb), 1) + pos_emb
+        # reshape for encoder
+        t = t.permute(1, 0, 2)
+        y = self.encoder(t)
+
+        model_weights = self.class_head(y[0, :, :])
+        weighted_models = x * model_weights.unsqueeze(2).repeat([1, 1, dim])
+
+        out = torch.sum(weighted_models, dim=1)
+        out /= torch.sum(out, dim=1, keepdim=True)
+
+        return out
+
+
 class NeuralEnsemblerBERTWeighter(torch.nn.Module):
     def __init__(self, num_models, num_classes, num_heads, num_per_head, dim_feedforward=128, num_enc_layers=3):
         super(NeuralEnsemblerBERTWeighter, self).__init__()
@@ -225,6 +261,8 @@ if __name__ == "__main__":
     parser.add_argument('--save_epoch', type=int, help='after how many epoch to save the model', default=10)
     parser.add_argument('--device', help='device number', default=0)
     parser.add_argument('--optimizer', type=str, help='name of the optimizer', default="sgd")
+    parser.add_argument('--model_type', type=str, help='type of model', default="bert",
+                        choices=["bert", "weighter", "model_weighter"])
     parser.add_argument('output', type=str, help='path to output network')
     args = parser.parse_args()
 
@@ -263,20 +301,29 @@ if __name__ == "__main__":
     val_data_loader = DataLoader(val_data, batch_size=batch_size, shuffle=True)
     test_data_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
-    ensembler = NeuralEnsemblerBERT(len(test_data.model_predicts), val_data.num_classes, num_heads, num_per_head,
-                                    dim_feedforward=dim_feedforward, num_enc_layers=num_layers)
-    # ensembler = NeuralEnsemblerBERTWeighter(len(test_data.model_predicts), val_data.num_classes, num_heads,
-    #                                         num_per_head,
-    #                                         dim_feedforward=dim_feedforward, num_enc_layers=num_layers)
+    if args.model_type == "bert":
+        ensembler = NeuralEnsemblerBERT(len(test_data.model_predicts), val_data.num_classes, num_heads, num_per_head,
+                                        dim_feedforward=dim_feedforward, num_enc_layers=num_layers)
+        criterion = torch.nn.CrossEntropyLoss()
+
+    elif args.model_type == "weighter":
+        ensembler = NeuralEnsemblerBERTWeighter(len(test_data.model_predicts), val_data.num_classes, num_heads,
+                                                num_per_head,
+                                                dim_feedforward=dim_feedforward, num_enc_layers=num_layers)
+        criterion = cross_entropy
+
+    elif args.model_type == "model_weighter":
+        ensembler = NeuralEnsemblerBERTModelWeighter(len(test_data.model_predicts), val_data.num_classes, num_heads,
+                                                     num_per_head, dim_feedforward=dim_feedforward,
+                                                     num_enc_layers=num_layers)
+        criterion = cross_entropy
+
     ensembler = ensembler.to(device)
 
     if args.optimizer == "sgd":
         optimizer = SGD(ensembler.parameters(), lr=learning_rate, momentum=0.9)
     elif args.optimizer == "adam":
         optimizer = Adam(ensembler.parameters(), lr=learning_rate)
-
-    criterion = torch.nn.CrossEntropyLoss()
-    # criterion = cross_entropy
 
     config = {
         "learning_rate": learning_rate,
