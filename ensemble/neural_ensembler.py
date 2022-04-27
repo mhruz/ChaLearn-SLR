@@ -216,13 +216,14 @@ class NeuralEnsemblerBERTWeighter(torch.nn.Module):
         return out
 
 
-def train(model, data_loader, epochs, optimizer, criterion, val_data_loader=None):
+def train(model, data_loader, epochs, optimizer, criterion, val_data_loader=None, apply_p=0.0, gauss_std=0.01,
+          uncertain=0.01):
     # wandb.watch(model)
 
     for epoch in range(epochs):
         model.train()
         for data, label in data_loader:
-            data = augment(data, apply_p=0.0, gauss_std=0.01, uncertain=0.01)
+            data = augment(data, apply_p=apply_p, gauss_std=gauss_std, uncertain=uncertain)
 
             optimizer.zero_grad()
 
@@ -261,7 +262,7 @@ def validate(model, data_loader, criterion, suffix="_val"):
     wandb.log({"acc{}".format(suffix): acc})
 
 
-def augment(data, apply_p=0.5, gauss_std=0.01, uncertain=0.1):
+def augment(data, apply_p=0.5, gauss_std=0.01, uncertain=0.01):
     # data is expected (batch_size, seq_len, features)
     # generate apply mask
     apply_mask = torch.rand((data.shape[0], data.shape[1]))
@@ -300,6 +301,10 @@ if __name__ == "__main__":
     parser.add_argument('--max_epoch', type=int, help='number of max epochs', default=40)
     parser.add_argument('--batch_size', type=int, help='number data in one batch', default=4)
     parser.add_argument('--save_epoch', type=int, help='after how many epoch to save the model', default=10)
+    parser.add_argument('--class_head_depth', type=int, help='depth of class head', default=1)
+    parser.add_argument('--p_apply', type=float, help='probability of applying augmentations', default=0.0)
+    parser.add_argument('--gauss_std', type=float, help='std of additive gaussian noise in augmentations', default=0.01)
+    parser.add_argument('--uncertain', type=float, help='probability of model to behave as if uncertain', default=0.01)
     parser.add_argument('--device', help='device number', default=0)
     parser.add_argument('--optimizer', type=str, help='name of the optimizer', default="sgd")
     parser.add_argument('--model_type', type=str, help='type of model', default="bert",
@@ -314,6 +319,9 @@ if __name__ == "__main__":
     num_per_head = args.num_per_head
     dim_feedforward = args.dim_feedforward
     num_layers = args.num_layers
+    p_apply = args.p_apply
+    gauss_std = args.gauss_std
+    uncertain = args.uncertain
 
     # os.environ["WANDB_DISABLED"] = "true"
 
@@ -375,12 +383,16 @@ if __name__ == "__main__":
         "num_heads": num_heads,
         "num_per_head": num_per_head,
         "model_type": str(ensembler),
-        "optimizer": optimizer
+        "optimizer": optimizer,
+        "p_apply": p_apply,
+        "gauss_std": gauss_std,
+        "uncertain": uncertain
     }
 
     wandb.init(project="sensors_2022", entity="mhruz", config=config)
 
-    ensembler = train(ensembler, val_data_loader, epochs, optimizer, criterion, val_data_loader=test_data_loader)
+    ensembler = train(ensembler, val_data_loader, epochs, optimizer, criterion, val_data_loader=test_data_loader,
+                      p_apply=p_apply, gauss_std=gauss_std, uncertain=uncertain)
 
     torch.save(ensembler.state_dict(), os.path.join(wandb.run.dir, args.output))
     wandb.save(args.output)
