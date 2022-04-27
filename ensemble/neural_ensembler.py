@@ -66,7 +66,8 @@ class AUTSLDataSet(Dataset):
 
 
 class NeuralEnsemblerBERT(torch.nn.Module):
-    def __init__(self, num_models, num_classes, num_heads, num_per_head, dim_feedforward=128, num_enc_layers=3):
+    def __init__(self, num_models, num_classes, num_heads, num_per_head, dim_feedforward=128, num_enc_layers=3,
+                 class_head_depth=1):
         super(NeuralEnsemblerBERT, self).__init__()
 
         self.embed_dim = num_per_head * num_heads
@@ -76,11 +77,14 @@ class NeuralEnsemblerBERT(torch.nn.Module):
         self.class_token = Parameter(torch.rand(self.embed_dim))
         self.pos_embedding = Parameter(torch.rand((num_models + 1, self.embed_dim)))
         self.embedding = Linear(num_classes, self.embed_dim, bias=False)
-        # self.class_head = torch.nn.Sequential(
-        #     Linear(self.embed_dim, self.embed_dim),
-        #     Linear(self.embed_dim, num_classes)
-        # )
         self.class_head = Linear(self.embed_dim, num_classes)
+        if class_head_depth == 1:
+            self.class_head = Linear(self.embed_dim, num_classes)
+        else:
+            module_list = [Linear(self.embed_dim, self.embed_dim) for _ in range(class_head_depth - 1)]
+            module_list.append(Linear(self.embed_dim, num_classes))
+
+            self.class_head = Sequential(*module_list)
 
     def forward(self, x):
         n, seq, dim = x.shape
@@ -93,13 +97,13 @@ class NeuralEnsemblerBERT(torch.nn.Module):
         y = self.encoder(t)
 
         cls_logits = self.class_head(y[0, :, :])
-        # cls_softmax = F.softmax(cls_logits, dim=1)
 
         return cls_logits
 
 
 class NeuralEnsemblerBERTModelWeighter(torch.nn.Module):
-    def __init__(self, num_models, num_classes, num_heads, num_per_head, dim_feedforward=128, num_enc_layers=3):
+    def __init__(self, num_models, num_classes, num_heads, num_per_head, dim_feedforward=128, num_enc_layers=3,
+                 class_head_depth=1):
         super(NeuralEnsemblerBERTModelWeighter, self).__init__()
 
         self.embed_dim = num_per_head * num_heads
@@ -109,10 +113,47 @@ class NeuralEnsemblerBERTModelWeighter(torch.nn.Module):
         self.class_token = Parameter(torch.rand(self.embed_dim))
         self.pos_embedding = Parameter(torch.rand((num_models + 1, self.embed_dim)))
         self.embedding = Linear(num_classes, self.embed_dim, bias=False)
-        # self.class_head = torch.nn.Sequential(
-        #     Linear(self.embed_dim, self.embed_dim),
-        #     Linear(self.embed_dim, num_classes)
-        # )
+
+        if class_head_depth == 1:
+            self.class_head = Sequential(Linear(self.embed_dim, num_models), torch.nn.Sigmoid())
+        else:
+            module_list = [Linear(self.embed_dim, self.embed_dim) for _ in range(class_head_depth - 1)]
+            module_list.append(Linear(self.embed_dim, num_models))
+            module_list.append(torch.nn.Sigmoid())
+
+            self.class_head = Sequential(*module_list)
+
+    def forward(self, x):
+        n, seq, dim = x.shape
+        x_emb = self.embedding(x)
+        cls_emb = torch.tile(self.class_token, [n, 1, 1])
+        pos_emb = torch.tile(self.pos_embedding, [n, 1, 1])
+        t = torch.cat((cls_emb, x_emb), 1) + pos_emb
+        # reshape for encoder
+        t = t.permute(1, 0, 2)
+        y = self.encoder(t)
+
+        model_weights = self.class_head(y[0, :, :])
+        weighted_models = x * model_weights.unsqueeze(2).repeat([1, 1, dim])
+
+        out = torch.sum(weighted_models, dim=1)
+        out /= torch.sum(out, dim=1, keepdim=True)
+
+        return out
+
+
+class NeuralEnsemblerBERTModelWeighterLegacy(torch.nn.Module):
+    def __init__(self, num_models, num_classes, num_heads, num_per_head, dim_feedforward=128, num_enc_layers=3):
+        super(NeuralEnsemblerBERTModelWeighterLegacy, self).__init__()
+
+        self.embed_dim = num_per_head * num_heads
+
+        encoder_layer = TransformerEncoderLayer(self.embed_dim, num_heads, dim_feedforward, activation="relu")
+        self.encoder = TransformerEncoder(encoder_layer, num_enc_layers)
+        self.class_token = Parameter(torch.rand(self.embed_dim))
+        self.pos_embedding = Parameter(torch.rand((num_models + 1, self.embed_dim)))
+        self.embedding = Linear(num_classes, self.embed_dim, bias=False)
+
         self.class_head = Linear(self.embed_dim, num_models)
 
     def forward(self, x):
