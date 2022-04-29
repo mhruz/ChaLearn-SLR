@@ -34,9 +34,9 @@ parameters:
 command:
   - python3
   - neural_ensembler.py
-  - /ensemble/data/AUTSL
-  - /ensemble/data/AUTSL/test
-  - /ensemble/data/AUTSL/AUTSL_val.txt
-  - /ensemble/data/AUTSL/AUTSL_test.txt
+  - /storage/brno2/home/mhruz/SignLanguage/neural_ensembler/AUTSL/val
+  - /storage/brno2/home/mhruz/SignLanguage/neural_ensembler/AUTSL/test
+  - /storage/brno2/home/mhruz/SignLanguage/neural_ensembler/AUTSL/AUTSL_val.txt
+  - /storage/brno2/home/mhruz/SignLanguage/neural_ensembler/AUTSL/AUTSL_test.txt
   - neural_ensembler_bert.pkl
   - ${args}
