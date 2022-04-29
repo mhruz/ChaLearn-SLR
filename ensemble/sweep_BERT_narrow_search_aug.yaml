@@ -1,0 +1,42 @@
+program: neural_ensembler.py
+method: bayes
+project: sensors_2022
+name: BERT_sweep_narrow
+description: The sweep focuses on narrower hyper-paramater search.
+metric:
+  name: acc_val
+  goal: maximize
+parameters:
+  learning_rate:
+    min: 0.00001
+    max: 0.0001
+  dim_feedforward:
+    min: 468
+    max: 1024
+  num_layers:
+    min: 2
+    max: 7
+  num_heads:
+    min: 4
+    max: 9
+  num_per_head:
+    min: 16
+    max: 52
+  p_apply:
+    min: 0.01
+    max: 0.5
+  gauss_std:
+    min: 0.01
+    max: 0.1
+  uncertain:
+    min: 0.0
+    max: 0.1
+command:
+  - python3
+  - neural_ensembler.py
+  - /ensemble/data/AUTSL
+  - /ensemble/data/AUTSL/test
+  - /ensemble/data/AUTSL/AUTSL_val.txt
+  - /ensemble/data/AUTSL/AUTSL_test.txt
+  - neural_ensembler_bert.pkl
+  - ${args}
