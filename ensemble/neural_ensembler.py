@@ -384,7 +384,7 @@ if __name__ == "__main__":
         "num_per_head": num_per_head,
         "model_type": str(ensembler),
         "optimizer": optimizer,
-        "p_apply": p_apply,
+        "apply_p": p_apply,
         "gauss_std": gauss_std,
         "uncertain": uncertain
     }
@@ -392,7 +392,7 @@ if __name__ == "__main__":
     wandb.init(project="sensors_2022", entity="mhruz", config=config)
 
     ensembler = train(ensembler, val_data_loader, epochs, optimizer, criterion, val_data_loader=test_data_loader,
-                      p_apply=p_apply, gauss_std=gauss_std, uncertain=uncertain)
+                      apply_p=p_apply, gauss_std=gauss_std, uncertain=uncertain)
 
     torch.save(ensembler.state_dict(), os.path.join(wandb.run.dir, args.output))
     wandb.save(args.output)
