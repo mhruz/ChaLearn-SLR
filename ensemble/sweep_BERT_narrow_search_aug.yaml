@@ -1,7 +1,7 @@
 program: neural_ensembler.py
 method: bayes
 project: sensors_2022
-name: BERT_sweep_narrow
+name: BERT_sweep_narrow_aug
 description: The sweep focuses on narrower hyper-paramater search.
 metric:
   name: acc_val
