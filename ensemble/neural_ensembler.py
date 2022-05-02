@@ -300,7 +300,7 @@ if __name__ == "__main__":
     parser.add_argument('--dim_feedforward', type=int, help='dimension of heads in Encoder', default=1024)
     parser.add_argument('--num_layers', type=int, help='dimension of heads in Encoder', default=6)
     parser.add_argument('--max_epoch', type=int, help='number of max epochs', default=40)
-    parser.add_argument('--batch_size', type=int, help='number data in one batch', default=4)
+    parser.add_argument('--batch_size', type=int, help='number data in one batch', default=32)
     parser.add_argument('--save_epoch', type=int, help='after how many epoch to save the model', default=10)
     parser.add_argument('--class_head_depth', type=int, help='depth of class head', default=1)
     parser.add_argument('--p_apply', type=float, help='probability of applying augmentations', default=0.0)
