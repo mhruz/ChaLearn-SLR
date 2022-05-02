@@ -36,6 +36,7 @@ class AUTSLDataSet(Dataset):
         self.model_predicts = {}
         self.num_classes = -1
         self.num_datapoints = -1
+        self.device = device
 
         for pcsv in csv_filenames:
             _csv = pd.read_csv(pcsv, sep=None)
@@ -62,7 +63,7 @@ class AUTSLDataSet(Dataset):
 
         label = torch.squeeze(torch.LongTensor(data=[self.labels[idx]]))
 
-        return data.to(device), label.to(device)
+        return data.to(self.device), label.to(self.device)
 
 
 class NeuralEnsemblerBERT(torch.nn.Module):
@@ -272,7 +273,7 @@ def augment(data, apply_p=0.5, gauss_std=0.01, uncertain=0.01):
         gauss_noise = gauss_noise.to(data.get_device())
 
     # compute the noisy data
-    data_noise = data + gauss_noise
+    data_noise = torch.abs(data + gauss_noise)
     # apply only to some sequence elements based on apply_p
     data[apply_mask] = data_noise[apply_mask]
 
