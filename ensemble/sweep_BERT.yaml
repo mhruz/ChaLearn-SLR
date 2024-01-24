@@ -1,6 +1,6 @@
 program: neural_ensembler.py
 method: bayes
-project: sensors_2022
+project: sensors_2022_wlasl
 name: BERT_sweep_global
 description: The sweep focuses on all hyper-paramaters.
 metric:
@@ -24,12 +24,14 @@ parameters:
     max: 64
   optimizer:
     values: ["adam", "sgd"]
+  max_epoch:
+    value: 600
 command:
   - python3
   - neural_ensembler.py
-  - /ensemble/data/AUTSL
-  - /ensemble/data/AUTSL/test
-  - /ensemble/data/AUTSL/AUTSL_val.txt
-  - /ensemble/data/AUTSL/AUTSL_test.txt
+  - /storage/brno2/home/mhruz/SignLanguage/neural_ensembler/WLASL/val
+  - /storage/brno2/home/mhruz/SignLanguage/neural_ensembler/WLASL/test
+  - /storage/brno2/home/mhruz/SignLanguage/neural_ensembler/WLASL/WLASL_val.txt
+  - /storage/brno2/home/mhruz/SignLanguage/neural_ensembler/WLASL/WLASL_test.txt
   - neural_ensembler_bert.pkl
   - ${args}

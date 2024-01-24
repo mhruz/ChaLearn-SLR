@@ -390,7 +390,7 @@ if __name__ == "__main__":
         "uncertain": uncertain
     }
 
-    wandb.init(project="sensors_2022", entity="mhruz", config=config)
+    wandb.init(project="sensors_2022_wlasl", entity="mhruz", config=config)
 
     ensembler = train(ensembler, val_data_loader, epochs, optimizer, criterion, val_data_loader=test_data_loader,
                       apply_p=p_apply, gauss_std=gauss_std, uncertain=uncertain)

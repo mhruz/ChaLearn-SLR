@@ -1,6 +1,6 @@
 program: neural_ensembler.py
 method: bayes
-project: sensors_2022
+project: sensors_2022_wlasl
 name: Model_Weighter_sweep_aug
 description: The sweep focuses on hyper-paramater search.
 metric:
@@ -33,12 +33,14 @@ parameters:
   uncertain:
     min: 0.0
     max: 0.1
+  max_epoch:
+    value: 600
 command:
   - python3
   - neural_ensembler.py
-  - /storage/brno2/home/mhruz/SignLanguage/neural_ensembler/AUTSL/val
-  - /storage/brno2/home/mhruz/SignLanguage/neural_ensembler/AUTSL/test
-  - /storage/brno2/home/mhruz/SignLanguage/neural_ensembler/AUTSL/AUTSL_val.txt
-  - /storage/brno2/home/mhruz/SignLanguage/neural_ensembler/AUTSL/AUTSL_test.txt
+  - /storage/brno2/home/mhruz/SignLanguage/neural_ensembler/WLASL/val
+  - /storage/brno2/home/mhruz/SignLanguage/neural_ensembler/WLASL/test
+  - /storage/brno2/home/mhruz/SignLanguage/neural_ensembler/WLASL/WLASL_val.txt
+  - /storage/brno2/home/mhruz/SignLanguage/neural_ensembler/WLASL/WLASL_test.txt
   - neural_ensembler_model_weighter.pkl
   - ${args}

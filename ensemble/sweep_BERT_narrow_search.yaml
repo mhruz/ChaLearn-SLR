@@ -1,6 +1,6 @@
 program: neural_ensembler.py
 method: bayes
-project: sensors_2022
+project: sensors_2022_wlasl
 name: BERT_sweep_narrow
 description: The sweep focuses on narrower hyper-paramater search.
 metric:
@@ -25,9 +25,9 @@ parameters:
 command:
   - python3
   - neural_ensembler.py
-  - /ensemble/data/AUTSL
-  - /ensemble/data/AUTSL/test
-  - /ensemble/data/AUTSL/AUTSL_val.txt
-  - /ensemble/data/AUTSL/AUTSL_test.txt
-  - neural_ensembler_bert.pkl
+  - /storage/brno2/home/mhruz/SignLanguage/neural_ensembler/WLASL/val
+  - /storage/brno2/home/mhruz/SignLanguage/neural_ensembler/WLASL/test
+  - /storage/brno2/home/mhruz/SignLanguage/neural_ensembler/WLASL_val.txt
+  - /storage/brno2/home/mhruz/SignLanguage/neural_ensembler/WLASL_test.txt
+  - neural_ensembler_bert_wlasl.pkl
   - ${args}
